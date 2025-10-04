@@ -187,12 +187,13 @@ def test_full_examples():
     examples_dir = os.path.join(os.path.dirname(__file__), '..', 'examples')
     
     examples = [
-        ("example1.mp", "Simple arithmetic"),
-        ("example2.mp", "Factorial function"),
-        ("example3.mp", "While loop"),
-        ("example4.mp", "Boolean logic"),
-        ("example5.mp", "String operations"),
-        ("example6.mp", "Complex algorithms"),
+        ("example1.mp", "Basic types and arithmetic"),
+        ("example2.mp", "Functions with different return types"),
+        ("example3.mp", "Loops and control flow"),
+        ("example4.mp", "Boolean logic and operations"),
+        ("example5.mp", "String operations and multiple types"),
+        ("example6.mp", "Complex algorithms (GCD, Prime, Fibonacci)"),
+        ("example7.mp", "All Minipar types demonstration"),
     ]
     
     for filename, description in examples:
