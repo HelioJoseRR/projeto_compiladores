@@ -19,6 +19,9 @@ class TAC:
         if self.op == 'CALL':
             # CALL nome_funcao n_args resultado
             return f"{self.op} {self.arg1} {self.arg2} {self.result}"
+        elif self.op == 'CHANNEL_CREATE':
+            # CHANNEL_CREATE channel_type name args
+            return f"{self.op} {self.arg1} {self.arg2} {{{self.result}}}"
         elif self.op in ['LABEL', 'GOTO', 'PARAM', 'RETURN', 'FUNC_BEGIN', 'FUNC_END']:
             if self.arg1:
                 return f"{self.op} {self.arg1}"
@@ -77,6 +80,21 @@ class CodeGenerator:
         if node.initializer:
             value = self.generate(node.initializer)
             self.emit('ASSIGN', value, None, node.name)
+    
+    def gen_ChannelDecl(self, node: 'ChannelDecl') -> None:
+        """Generate code for channel declaration"""
+        # Register channel in symbol table
+        self.symbol_table[node.name] = node.channel_type
+        
+        # Generate code for channel arguments
+        arg_temps = []
+        for arg in node.arguments:
+            arg_temp = self.generate(arg)
+            arg_temps.append(arg_temp)
+        
+        # Emit channel creation instruction
+        # Format: CHANNEL_CREATE channel_type name arg1 arg2 arg3...
+        self.emit('CHANNEL_CREATE', node.channel_type, node.name, ','.join(str(a) for a in arg_temps))
     
     def gen_FuncDecl(self, node: FuncDecl) -> None:
         self.emit('FUNC_BEGIN', node.name)

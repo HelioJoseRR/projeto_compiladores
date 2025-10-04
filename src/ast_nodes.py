@@ -113,3 +113,11 @@ class StringLiteral(ASTNode):
 @dataclass
 class BoolLiteral(ASTNode):
     value: bool
+
+
+@dataclass
+class ChannelDecl(ASTNode):
+    """Channel declaration (s_channel or c_channel)"""
+    channel_type: str  # 's_channel' or 'c_channel'
+    name: str
+    arguments: List[ASTNode]  # Arguments for the channel (function, desc, host, port, etc.)

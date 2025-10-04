@@ -22,6 +22,7 @@ class TokenType(Enum):
     RETURN = auto()
     S_CHANNEL = auto()
     TRUE = auto()
+    VAR = auto()
     WHILE = auto()
     
     # Types
@@ -29,6 +30,9 @@ class TokenType(Enum):
     STRING = auto()
     BOOL = auto()
     VOID = auto()
+    LIST = auto()
+    DICT = auto()
+    ANY = auto()
     
     # Literals
     NUMBER_LITERAL = auto()
@@ -63,8 +67,13 @@ class TokenType(Enum):
     RPAREN = auto()
     LBRACE = auto()
     RBRACE = auto()
+    LBRACKET = auto()
+    RBRACKET = auto()
     COMMA = auto()
     SEMICOLON = auto()
+    COLON = auto()
+    ARROW = auto()
+    DOT = auto()
     
     # Special
     EOF = auto()
@@ -95,11 +104,15 @@ class Lexer:
         'return': TokenType.RETURN,
         's_channel': TokenType.S_CHANNEL,
         'true': TokenType.TRUE,
+        'var': TokenType.VAR,
         'while': TokenType.WHILE,
         'number': TokenType.NUMBER,
         'string': TokenType.STRING,
         'bool': TokenType.BOOL,
         'void': TokenType.VOID,
+        'list': TokenType.LIST,
+        'dict': TokenType.DICT,
+        'any': TokenType.ANY,
     }
     
     def __init__(self, source: str):
@@ -261,6 +274,11 @@ class Lexer:
                 self.advance()
                 self.tokens.append(Token(TokenType.OR, '||', start_line, start_col))
             
+            elif char == '-' and self.peek(1) == '>':
+                self.advance()
+                self.advance()
+                self.tokens.append(Token(TokenType.ARROW, '->', start_line, start_col))
+            
             # Single-character operators and delimiters
             elif char == '+':
                 self.advance()
@@ -321,6 +339,22 @@ class Lexer:
             elif char == ';':
                 self.advance()
                 self.tokens.append(Token(TokenType.SEMICOLON, ';', start_line, start_col))
+            
+            elif char == ':':
+                self.advance()
+                self.tokens.append(Token(TokenType.COLON, ':', start_line, start_col))
+            
+            elif char == '.':
+                self.advance()
+                self.tokens.append(Token(TokenType.DOT, '.', start_line, start_col))
+            
+            elif char == '[':
+                self.advance()
+                self.tokens.append(Token(TokenType.LBRACKET, '[', start_line, start_col))
+            
+            elif char == ']':
+                self.advance()
+                self.tokens.append(Token(TokenType.RBRACKET, ']', start_line, start_col))
             
             else:
                 self.error(f"Unexpected character: '{char}'")

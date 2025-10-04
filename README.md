@@ -14,12 +14,16 @@ projeto_compiladores/
 │   ├── codegen.py        # Geração de Código Intermediário
 │   └── compiler.py       # Driver principal do compilador
 ├── examples/             # Programas de exemplo em Minipar
-│   ├── example1.mp       # Aritmética básica
-│   ├── example2.mp       # Fatorial recursivo
-│   ├── example3.mp       # Loop while
-│   ├── example4.mp       # Lógica booleana
-│   ├── example5.mp       # Manipulação de strings
-│   └── example6.mp       # Algoritmos complexos
+│   ├── ex1.minipar       # Variáveis, funções e controle de fluxo
+│   ├── ex2.minipar       # Canais de servidor e tipos
+│   ├── ex3.minipar       # Loops e entrada de usuário
+│   ├── ex4.minipar       # Funções aninhadas e execução paralela
+│   ├── ex5.minipar       # Funções simples
+│   ├── fatorial_rec.minipar  # Recursão
+│   ├── quicksort.minipar     # Algoritmo de ordenação
+│   ├── recomendacao.minipar  # Sistema de recomendação
+│   ├── client.minipar        # Cliente de comunicação
+│   └── README.md             # Documentação dos exemplos
 ├── tests/                # Testes do compilador
 │   └── test_compiler.py  # Suite de testes
 ├── docs/                 # Documentação completa
@@ -105,9 +109,9 @@ uv run run_tests.py
 
 ```bash
 # Executar compilador
-python compile.py examples/example1.mp
+python compile.py examples/ex1.minipar
 # ou
-py compile.py examples/example1.mp
+py compile.py examples/ex1.minipar
 
 # Executar testes
 python run_tests.py
@@ -119,16 +123,16 @@ python run_tests.py
 
 ```bash
 # Compilar um arquivo Minipar
-python compile.py examples/example1.mp
+python compile.py examples/ex1.minipar
 
 # Mostrar tokens durante compilação
-python compile.py examples/example1.mp --tokens
+python compile.py examples/ex1.minipar --tokens
 
 # Mostrar AST durante compilação
-python compile.py examples/example1.mp --ast
+python compile.py examples/ex1.minipar --ast
 
 # Mostrar ambos
-python compile.py examples/example1.mp --tokens --ast
+python compile.py examples/ex1.minipar --tokens --ast
 ```
 
 ### Executar Testes
@@ -137,59 +141,64 @@ python compile.py examples/example1.mp --tokens --ast
 python run_tests.py
 ```
 
-```bash
-# Compilar um arquivo Minipar
-python compiler.py example1.mp
-
-# Mostrar tokens durante compilação
-python compiler.py example1.mp --tokens
-
-# Mostrar AST durante compilação
-python compiler.py example1.mp --ast
-
-# Mostrar ambos
-python compiler.py example1.mp --tokens --ast
-```
-
-### Executar Testes
-
-```bash
-python test_compiler.py
-```
-
 ## 📝 Exemplos de Código
 
-### Example 1: Variáveis e Aritmética
+### Example 1: Variáveis e Funções
 ```minipar
-number x = 10;
-number y = 20;
-number result = x + y * 2;
+var a: number = 10
+var b: bool = true
+
+func soma(num1: number, num2: number) -> number {
+    var s: number = num1 + num2
+    return s + 10
+}
+
+print(soma(2, 3))
 ```
 
-### Example 2: Função Recursiva
+### Example 2: Função Recursiva (Fatorial)
 ```minipar
-func number factorial(number n) {
-    if (n <= 1) {
-        return 1;
+func fatorial(n: number) -> number {
+    if (n == 0 || n == 1) {
+        return 1
     } else {
-        return n * factorial(n - 1);
+        return n * fatorial(n - 1)
     }
 }
+
+var valor: number = 10
+print("Fatorial: ", fatorial(valor))
 ```
 
 ### Example 3: Loop While
 ```minipar
-func number sum(number n) {
-    number total = 0;
-    number i = 1;
-    
-    while (i <= n) {
-        total = total + i;
-        i = i + 1;
-    }
-    
-    return total;
+var a: number = 10
+
+while(a <= 15) {
+    print("Contador:", a)
+    a = a + 1
+    if(a == 12) { break }
 }
+
+print("Final:", a)
+```
+
+### Example 4: Canais de Comunicação
+```minipar
+# Canal servidor
+func soma(num1: number = 0, num2: number) -> string {
+    return to_string(num1 + num2)
+}
+
+var desc: string = "Digite dois numeros"
+s_channel calculadora_server {soma, desc, "localhost", 1234}
+
+# Canal cliente
+c_channel client {"localhost", 8585}
+var entrada: string = input("Digite uma expressão: ")
+var ret: string = client.send(entrada)
+print(ret)
+client.close()
 ```
 
 ## 🔧 Formato do Código de Três Endereços
@@ -226,8 +235,23 @@ CALL factorial 1 t10
 
 ### Palavras-chave
 - Controle de fluxo: `if`, `else`, `while`, `break`, `continue`, `return`
-- Tipos: `number`, `string`, `bool`, `void`, `c_channel`, `s_channel`
-- Outros: `func`, `par`, `true`, `false`
+- Tipos: `number`, `string`, `bool`, `void`, `list`, `dict`, `any`, `c_channel`, `s_channel`
+- Outros: `func`, `var`, `par`, `true`, `false`
+
+### Sintaxe de Declarações
+
+#### Variáveis
+```minipar
+var nome: tipo = valor
+```
+
+#### Funções
+```minipar
+func nome(param1: tipo1, param2: tipo2) -> tipo_retorno {
+    # corpo
+    return valor
+}
+```
 
 ### Operadores
 - Aritméticos: `+`, `-`, `*`, `/`, `%`
@@ -240,9 +264,28 @@ CALL factorial 1 t10
 - `string`: Cadeia de caracteres
 - `bool`: Booleano (true/false)
 - `void`: Tipo vazio (retorno de funções)
+- `list`: Listas/arrays
+- `dict`: Dicionários/mapas
+- `any`: Qualquer tipo
 - `func`: Tipo função
 - `c_channel`: Canal socket cliente
 - `s_channel`: Canal socket servidor
+
+### Comentários
+```minipar
+# Comentário de linha única
+
+/*
+ * Comentário
+ * de múltiplas linhas
+ */
+```
+
+### Características Especiais
+- **Sem ponto e vírgula**: As declarações não requerem `;` no final
+- **Tipagem explícita**: Variáveis e parâmetros devem ter tipos declarados
+- **Anotação de tipo**: Usa `:` para tipo de variável e `->` para tipo de retorno
+- **Extensão de arquivo**: `.minipar`
 
 ## 🏗️ Arquitetura e Design
 

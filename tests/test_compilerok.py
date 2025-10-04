@@ -77,7 +77,7 @@ def test_parser():
     print("Testing Parser...")
     
     # Test 1: Variable declaration
-    source = "number x = 10;"
+    source = "var x: number = 10"
     lexer = Lexer(source)
     parser = Parser(lexer.tokenize())
     ast = parser.parse()
@@ -86,8 +86,8 @@ def test_parser():
     
     # Test 2: Function declaration
     source = """
-    func number add(number a, number b) {
-        return a + b;
+    func add(a: number, b: number) -> number {
+        return a + b
     }
     """
     lexer = Lexer(source)
@@ -98,11 +98,11 @@ def test_parser():
     
     # Test 3: If statement
     source = """
-    func void test() {
+    func test() -> void {
         if (x > 0) {
-            y = 1;
+            y = 1
         } else {
-            y = 0;
+            y = 0
         }
     }
     """
@@ -114,9 +114,9 @@ def test_parser():
     
     # Test 4: While loop
     source = """
-    func void loop() {
+    func loop() -> void {
         while (x < 10) {
-            x = x + 1;
+            x = x + 1
         }
     }
     """
@@ -134,7 +134,7 @@ def test_codegen():
     
     # Test 1: Simple arithmetic
     source = """
-    number x = 5 + 3;
+    var x: number = 5 + 3
     """
     lexer = Lexer(source)
     parser = Parser(lexer.tokenize())
@@ -146,8 +146,8 @@ def test_codegen():
     
     # Test 2: Function call
     source = """
-    func number add(number a, number b) {
-        return a + b;
+    func add(a: number, b: number) -> number {
+        return a + b
     }
     """
     lexer = Lexer(source)
@@ -160,9 +160,9 @@ def test_codegen():
     
     # Test 3: Conditional
     source = """
-    func void test(number x) {
+    func test(x: number) -> void {
         if (x > 0) {
-            x = x + 1;
+            x = x + 1
         }
     }
     """
@@ -187,13 +187,11 @@ def test_full_examples():
     examples_dir = os.path.join(os.path.dirname(__file__), '..', 'examples')
     
     examples = [
-        ("example1.mp", "Basic types and arithmetic"),
-        ("example2.mp", "Functions with different return types"),
-        ("example3.mp", "Loops and control flow"),
-        ("example4.mp", "Boolean logic and operations"),
-        ("example5.mp", "String operations and multiple types"),
-        ("example6.mp", "Complex algorithms (GCD, Prime, Fibonacci)"),
-        ("example7.mp", "All Minipar types demonstration"),
+        ("ex1.minipar", "Variables, functions and control flow"),
+        ("ex2.minipar", "Server channels and types"),
+        ("ex3.minipar", "Loops and user input"),
+        ("ex5.minipar", "Simple functions"),
+        ("fatorial_rec.minipar", "Recursive factorial"),
     ]
     
     for filename, description in examples:

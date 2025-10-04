@@ -48,11 +48,16 @@ class Parser:
     def declaration(self) -> ASTNode:
         if self.match(TokenType.FUNC):
             return self.func_declaration()
-        return self.var_declaration()
+        elif self.match(TokenType.VAR):
+            return self.var_declaration()
+        elif self.match(TokenType.S_CHANNEL, TokenType.C_CHANNEL):
+            return self.channel_declaration()
+        else:
+            # Could be a statement (function call, assignment, etc.)
+            return self.statement()
     
     def func_declaration(self) -> FuncDecl:
         self.consume(TokenType.FUNC)
-        return_type = self.type_specifier()
         name = self.consume(TokenType.IDENTIFIER, "Expected function name").value
         
         self.consume(TokenType.LPAREN)
@@ -65,26 +70,69 @@ class Parser:
                 parameters.append(self.parameter())
         
         self.consume(TokenType.RPAREN)
+        
+        # Expect arrow and return type
+        self.consume(TokenType.ARROW, "Expected '->' after parameter list")
+        return_type = self.type_specifier()
+        
         body = self.block()
         
         return FuncDecl(return_type, name, parameters, body)
     
     def parameter(self) -> VarDecl:
-        param_type = self.type_specifier()
         name = self.consume(TokenType.IDENTIFIER, "Expected parameter name").value
-        return VarDecl(param_type, name)
+        self.consume(TokenType.COLON, "Expected ':' after parameter name")
+        param_type = self.type_specifier()
+        
+        # Optional default value
+        initializer = None
+        if self.match(TokenType.ASSIGN):
+            self.advance()
+            initializer = self.expression()
+        
+        return VarDecl(param_type, name, initializer)
     
     def var_declaration(self) -> VarDecl:
-        var_type = self.type_specifier()
+        self.consume(TokenType.VAR, "Expected 'var' keyword")
         name = self.consume(TokenType.IDENTIFIER, "Expected variable name").value
+        self.consume(TokenType.COLON, "Expected ':' after variable name")
+        var_type = self.type_specifier()
         
         initializer = None
         if self.match(TokenType.ASSIGN):
             self.advance()
             initializer = self.expression()
         
-        self.consume(TokenType.SEMICOLON, "Expected ';' after variable declaration")
+        # Semicolon is now optional
+        if self.match(TokenType.SEMICOLON):
+            self.advance()
+        
         return VarDecl(var_type, name, initializer)
+    
+    def channel_declaration(self) -> 'ChannelDecl':
+        """Parse channel declaration: s_channel name {args} or c_channel name {args}"""
+        channel_type = 's_channel' if self.match(TokenType.S_CHANNEL) else 'c_channel'
+        self.advance()
+        
+        name = self.consume(TokenType.IDENTIFIER, "Expected channel name").value
+        
+        self.consume(TokenType.LBRACE, "Expected '{' after channel name")
+        
+        # Parse arguments (comma-separated expressions)
+        arguments = []
+        if not self.match(TokenType.RBRACE):
+            arguments.append(self.expression())
+            while self.match(TokenType.COMMA):
+                self.advance()
+                arguments.append(self.expression())
+        
+        self.consume(TokenType.RBRACE, "Expected '}' after channel arguments")
+        
+        # Semicolon is optional
+        if self.match(TokenType.SEMICOLON):
+            self.advance()
+        
+        return ChannelDecl(channel_type, name, arguments)
     
     def type_specifier(self) -> str:
         if self.match(TokenType.NUMBER):
@@ -105,6 +153,15 @@ class Parser:
         elif self.match(TokenType.S_CHANNEL):
             self.advance()
             return 's_channel'
+        elif self.match(TokenType.LIST):
+            self.advance()
+            return 'list'
+        elif self.match(TokenType.DICT):
+            self.advance()
+            return 'dict'
+        elif self.match(TokenType.ANY):
+            self.advance()
+            return 'any'
         else:
             self.error("Expected type specifier")
     
@@ -131,9 +188,10 @@ class Parser:
             return self.continue_statement()
         elif self.match(TokenType.LBRACE):
             return self.block()
-        elif self.match(TokenType.NUMBER, TokenType.STRING, TokenType.BOOL, 
-                       TokenType.VOID, TokenType.C_CHANNEL, TokenType.S_CHANNEL):
+        elif self.match(TokenType.VAR):
             return self.var_declaration()
+        elif self.match(TokenType.FUNC):
+            return self.func_declaration()
         else:
             return self.expression_statement()
     
@@ -165,25 +223,34 @@ class Parser:
         self.consume(TokenType.RETURN)
         value = None
         
-        if not self.match(TokenType.SEMICOLON):
+        if not self.match(TokenType.SEMICOLON) and not self.match(TokenType.RBRACE):
             value = self.expression()
         
-        self.consume(TokenType.SEMICOLON)
+        # Semicolon is optional
+        if self.match(TokenType.SEMICOLON):
+            self.advance()
+        
         return ReturnStmt(value)
     
     def break_statement(self) -> BreakStmt:
         self.consume(TokenType.BREAK)
-        self.consume(TokenType.SEMICOLON)
+        # Semicolon is optional
+        if self.match(TokenType.SEMICOLON):
+            self.advance()
         return BreakStmt()
     
     def continue_statement(self) -> ContinueStmt:
         self.consume(TokenType.CONTINUE)
-        self.consume(TokenType.SEMICOLON)
+        # Semicolon is optional
+        if self.match(TokenType.SEMICOLON):
+            self.advance()
         return ContinueStmt()
     
     def expression_statement(self) -> ExprStmt:
         expr = self.expression()
-        self.consume(TokenType.SEMICOLON)
+        # Semicolon is optional
+        if self.match(TokenType.SEMICOLON):
+            self.advance()
         return ExprStmt(expr)
     
     def expression(self) -> ASTNode:

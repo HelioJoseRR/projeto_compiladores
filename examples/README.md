@@ -1,424 +1,445 @@
-# Exemplos Minipar
+# Exemplos de Código MiniPar
 
-Esta pasta contém exemplos de código na linguagem Minipar, demonstrando todos os recursos e tipos suportados pelo compilador.
+Esta pasta contém exemplos de programas escritos na linguagem MiniPar, demonstrando os principais recursos e a sintaxe da linguagem.
 
-## 📝 Lista de Exemplos
+## 📝 Sintaxe da Linguagem MiniPar
 
-### Example 1: Tipos Básicos e Aritmética
-**Arquivo:** `example1.mp`
+### Declaração de Variáveis
 
-**Conceitos Demonstrados:**
-- Declaração de variáveis com tipo `number`
-- Números inteiros e reais (ponto flutuante)
-- Operações aritméticas: `+`, `-`, `*`, `/`, `%`
-- Operações compostas e precedência
-
-**Código:**
 ```minipar
-number inteiro = 10;
-number real = 3.14;
-number soma = inteiro + real;
-number resultado = (inteiro + real) * produto - divisao;
+var nome: tipo = valor
 ```
 
-**TAC Gerado:** 14 instruções
-
----
-
-### Example 2: Funções com Diferentes Tipos de Retorno
-**Arquivo:** `example2.mp`
-
-**Conceitos Demonstrados:**
-- Funções com retorno `number`
-- Funções com retorno `bool`
-- Funções com retorno `void` (sem retorno)
-- Recursão (factorial)
-- Estruturas condicionais (`if-else`)
-- Passagem de parâmetros
-
-**Código:**
+Exemplos:
 ```minipar
-func number factorial(number n) {
-    if (n <= 1) {
-        return 1;
-    } else {
-        return n * factorial(n - 1);
+var x: number = 10
+var nome: string = "João"
+var ativo: bool = true
+var lista: list = []
+var dados: dict = {}
+```
+
+### Declaração de Funções
+
+```minipar
+func nome_funcao(parametro1: tipo1, parametro2: tipo2) -> tipo_retorno {
+    # corpo da função
+    return valor
+}
+```
+
+Exemplos:
+```minipar
+func soma(a: number, b: number) -> number {
+    return a + b
+}
+
+func saudacao(nome: string) -> void {
+    print("Olá,", nome)
+}
+
+# Parâmetros com valores padrão
+func multiplicar(x: number, y: number = 2) -> number {
+    return x * y
+}
+```
+
+### Tipos de Dados
+
+- `number`: Números inteiros e reais
+- `string`: Cadeias de caracteres
+- `bool`: Valores booleanos (`true` ou `false`)
+- `void`: Tipo vazio (apenas para retorno de funções)
+- `list`: Listas/arrays
+- `dict`: Dicionários/mapas
+- `any`: Qualquer tipo
+- `c_channel`: Canal de comunicação cliente (sockets)
+- `s_channel`: Canal de comunicação servidor (sockets)
+
+### Estruturas de Controle
+
+#### If-Else
+```minipar
+if (condicao) {
+    # código
+} else {
+    # código alternativo
+}
+```
+
+#### While
+```minipar
+while (condicao) {
+    # código
+    if (alguma_condicao) {
+        break      # sai do loop
+    }
+    if (outra_condicao) {
+        continue   # pula para próxima iteração
     }
 }
+```
 
-func bool isPositive(number x) {
-    return x > 0;
-}
+### Comentários
 
-func void printInfo(number value) {
-    number result = value * 2;
+```minipar
+# Comentário de linha única
+
+/* 
+ * Comentário
+ * de múltiplas
+ * linhas
+ */
+```
+
+### Operadores
+
+#### Aritméticos
+- `+` (adição)
+- `-` (subtração)
+- `*` (multiplicação)
+- `/` (divisão)
+- `%` (módulo)
+
+#### Relacionais
+- `==` (igual)
+- `!=` (diferente)
+- `<` (menor)
+- `>` (maior)
+- `<=` (menor ou igual)
+- `>=` (maior ou igual)
+
+#### Lógicos
+- `&&` (e lógico)
+- `||` (ou lógico)
+- `!` (negação)
+
+### Funções Built-in
+
+- `print(...)`: Imprime valores
+- `input(mensagem)`: Lê entrada do usuário
+- `len(colecao)`: Retorna tamanho de uma coleção
+- `to_string(valor)`: Converte valor para string
+
+### Canais de Comunicação
+
+```minipar
+# Canal servidor
+s_channel servidor {funcao, descricao, "host", porta}
+
+# Canal cliente
+c_channel cliente {"host", porta}
+var resposta: string = cliente.send(mensagem)
+cliente.close()
+```
+
+### Execução Paralela
+
+```minipar
+par {
+    funcao1()
+    funcao2()
 }
 ```
 
-**TAC Gerado:** 41 instruções
+## 📚 Descrição dos Exemplos
 
----
+### ex1.minipar
+**Conceitos demonstrados:**
+- Declaração de variáveis com tipos
+- Definição de funções com parâmetros e retorno
+- Estruturas de controle (while, if)
+- Chamadas de função
+- Break em loops
+- Comentários simples e compostos
 
-### Example 3: Loops e Controle de Fluxo
-**Arquivo:** `example3.mp`
+```minipar
+var a: number = 10
+var b: bool = true
 
-**Conceitos Demonstrados:**
-- Loop `while`
-- Acumuladores e contadores
+func soma(num1: number, num2: number) -> number {
+    var s: number = num1 + num2
+    while(a < 20) {
+        a = a + 1
+        print(a)
+        if(a == 15) { break }
+    }
+    return s + 10
+}
+
+print(soma(2, 3))
+```
+
+### ex2.minipar
+**Conceitos demonstrados:**
+- Operadores relacionais e lógicos
+- Valores padrão em parâmetros
+- Conversão de tipos (to_string)
+- Canais de servidor (s_channel)
+- Loop infinito com break
+
+```minipar
+var a: bool = true
+var b: bool = 1 >= 2
+var c: number = -1
+
+while(true) {
+    break
+}
+
+func soma(num1: number = 0, num2: number) -> string {
+    return to_string(num1 + num2)
+}
+
+print(soma(1,2))
+var desc: string = "Digite dois numeros"
+s_channel calculadora_server {soma, desc, "localhost", 1234}
+```
+
+### ex3.minipar
+**Conceitos demonstrados:**
+- Loops while com condições
+- Múltiplas chamadas de print
+- Funções com múltiplos parâmetros
+- Expressões aritméticas complexas
+- Função input para entrada do usuário
+- Comentários de múltiplas linhas
+
+### ex4.minipar
+**Conceitos demonstrados:**
+- Funções aninhadas (função dentro de função)
+- Escopo de variáveis
+- Execução paralela com `par`
 - Múltiplas funções
-- Algoritmos: soma, contagem de dígitos, soma de pares
+- Loops while dentro de funções
+- Função sleep (simulação de delay)
 
-**Código:**
 ```minipar
-func number sumWhile(number n) {
-    number total = 0;
-    number i = 1;
-    
-    while (i <= n) {
-        total = total + i;
-        i = i + 1;
+func fatorial(x: number, y: number) -> void {
+    func fat(n: number) -> number {
+        var prod: number = 1
+        var i: number = 2
+        while(i <= n) {
+            prod = prod * i
+            i = i + 1
+        }
+        return prod
     }
     
-    return total;
+    var i: number = x
+    while(i <= y) {
+        print("Fatorial de:", i, "=", fat(i))
+        i = i + 1
+        sleep(0.5)
+    }
 }
 
-func number countDigits(number n) {
-    number count = 0;
-    while (n > 0) {
-        count = count + 1;
-        n = n / 10;
+func fibonacci(n: number) -> void {
+    var a: number = 0
+    var b: number = 1
+    var count: number = 0
+    
+    while (count < n) {
+        print("Fib:", a)
+        var aux: number = a + b
+        a = b
+        b = aux
+        count = count + 1
+        sleep(0.5)
     }
-    return count;
+}
+
+par {
+    fatorial(2, 5)
+    fibonacci(10)
 }
 ```
 
-**TAC Gerado:** 59 instruções
+### ex5.minipar
+**Conceitos demonstrados:**
+- Funções simples com parâmetros
+- Decremento em loops
+- Condições de parada
 
----
+### fatorial_rec.minipar
+**Conceitos demonstrados:**
+- Recursão
+- Estruturas if-else
+- Operadores lógicos (||)
+- Múltiplas condições
 
-### Example 4: Tipo Bool e Lógica Booleana
-**Arquivo:** `example4.mp`
-
-**Conceitos Demonstrados:**
-- Tipo `bool` (booleano)
-- Valores `true` e `false`
-- Operadores lógicos: `&&` (AND), `||` (OR), `!` (NOT)
-- Operadores relacionais: `<`, `>`, `<=`, `>=`, `==`, `!=`
-- Expressões booleanas complexas
-- Validação de valores
-
-**Código:**
 ```minipar
-func bool isEven(number x) {
-    return x % 2 == 0;
+func fatorial(n: number) -> number {
+    if (n == 0 || n == 1) {
+        return 1
+    } else {
+        return n * fatorial(n - 1)
+    }
 }
 
-func bool inRange(number x, number min, number max) {
-    return (x >= min) && (x <= max);
-}
-
-bool complex = (a > b) && (isEven(a) || isOdd(b));
+print("CALCULA O FATORIAL RECURSIVO")
+var valor: number = 10
+print("Fatorial: ", fatorial(valor))
 ```
 
-**TAC Gerado:** 80 instruções
+### quicksort.minipar
+**Conceitos demonstrados:**
+- Algoritmo de ordenação recursivo
+- Manipulação de listas
+- Compreensão de lista (list comprehension)
+- Métodos de lista (append, split, strip)
+- Entrada e processamento de dados
+- Estruturas de dados complexas
 
----
+### recomendacao.minipar
+**Conceitos demonstrados:**
+- Dicionários complexos
+- Iteração sobre dicionários e listas
+- Funções matemáticas (pow, sqrt, sum)
+- Sistema de recomendação completo
+- Manipulação de estruturas de dados aninhadas
+- Algoritmos de cálculo de similaridade
+- Interface de texto interativa
 
-### Example 5: Tipo String e Múltiplos Tipos
-**Arquivo:** `example5.mp`
+### client.minipar
+**Conceitos demonstrados:**
+- Canais cliente (c_channel)
+- Comunicação via sockets
+- Loop de interação com usuário
+- Condição de saída
+- Envio e recebimento de mensagens
+- Fechamento de conexão
 
-**Conceitos Demonstrados:**
-- Tipo `string` (cadeia de caracteres)
-- Declaração de strings literais
-- Passagem de strings como parâmetros
-- Funções com múltiplos tipos de parâmetros
-- Integração de `number`, `string` e `bool`
-
-**Código:**
 ```minipar
-func void greet(string name) {
-    string greeting = "Hello, ";
-}
+c_channel client {"localhost", 8585}
 
-func string getWelcomeMessage() {
-    return "Welcome to Minipar!";
-}
-
-func void processUser(string username, number userId, bool active) {
-    if (active) {
-        string status = "Active";
+while(true) {
+    var entrada: string = input("Digite uma expressão: ")
+    if (entrada == "exit") {
+        break
     }
+    var ret: string = client.send(entrada)
+    print(ret)
 }
+
+client.close()
 ```
 
-**TAC Gerado:** 49 instruções
+## 🚀 Como Executar
 
----
-
-### Example 6: Algoritmos Complexos
-**Arquivo:** `example6.mp`
-
-**Conceitos Demonstrados:**
-- Algoritmo de Euclides (GCD - Máximo Divisor Comum)
-- Cálculo de LCM (Mínimo Múltiplo Comum)
-- Teste de primalidade
-- Cálculo de potências
-- Sequência de Fibonacci (iterativa)
-- Verificação de quadrado perfeito
-- Combinação de múltiplas funções
-
-**Código:**
-```minipar
-func number gcd(number a, number b) {
-    while (b != 0) {
-        number temp = b;
-        b = a % b;
-        a = temp;
-    }
-    return a;
-}
-
-func bool isPrime(number n) {
-    if (n <= 1) return false;
-    if (n == 2) return true;
-    if (n % 2 == 0) return false;
-    
-    number i = 3;
-    while (i * i <= n) {
-        if (n % i == 0) return false;
-        i = i + 2;
-    }
-    return true;
-}
-
-func number fibonacci(number n) {
-    if (n <= 1) return n;
-    
-    number a = 0;
-    number b = 1;
-    number i = 2;
-    
-    while (i <= n) {
-        number temp = a + b;
-        a = b;
-        b = temp;
-        i = i + 1;
-    }
-    return b;
-}
-```
-
-**TAC Gerado:** 165 instruções
-
----
-
-### Example 7: Todos os Tipos da Linguagem Minipar
-**Arquivo:** `example7.mp`
-
-**Conceitos Demonstrados:**
-- **TODOS os 7 tipos básicos** da linguagem Minipar:
-  1. `number` - Números inteiros e reais
-  2. `string` - Sequências de caracteres
-  3. `bool` - Booleanos (true/false)
-  4. `void` - Retorno vazio
-  5. `func` - Tipo função
-  6. `c_channel` - Canal socket cliente
-  7. `s_channel` - Canal socket servidor
-- Uso integrado de todos os tipos
-- Declarações de funções com diferentes assinaturas
-
-**Código:**
-```minipar
-# Tipo NUMBER
-number inteiro = 42;
-number real = 3.14159;
-
-# Tipo STRING
-string nome = "Alice";
-string mensagem = "Hello, World!";
-
-# Tipo BOOL
-bool verdadeiro = true;
-bool falso = false;
-
-# Tipo FUNC (funções)
-func number calcular(number x, number y) {
-    return x * y + 10;
-}
-
-func bool verificar(number valor) {
-    return valor > 0 && valor < 100;
-}
-
-func string formatar(string texto, number codigo) {
-    return "Formatted";
-}
-
-func void processar(number n) {
-    number temp = n * 2;
-}
-
-# Tipos CHANNEL
-func void conectarCliente(c_channel canal) {
-    number status = 1;
-}
-
-func void iniciarServidor(s_channel servidor) {
-    number porta = 8080;
-}
-```
-
-**TAC Gerado:** 101 instruções
-
----
-
-## 🚀 Como Compilar os Exemplos
-
-### Método 1: Script Auxiliar (Recomendado)
-```bash
-# Compilar um exemplo específico
-python compile.py examples/example1.mp
-
-# Com visualização de tokens
-python compile.py examples/example1.mp --tokens
-
-# Com visualização da AST
-python compile.py examples/example2.mp --ast
-
-# Com ambos
-python compile.py examples/example3.mp --tokens --ast
-```
-
-### Método 2: Com UV
-```bash
-uv run compile.py examples/example1.mp
-uv run compile.py examples/example4.mp --tokens --ast
-```
-
-### Método 3: Módulo Direto
-```bash
-python -m src.compiler examples/example1.mp
-```
-
----
-
-## 📊 Comparação dos Exemplos
-
-| Exemplo | Tokens | Declarações | Instruções TAC | Complexidade |
-|---------|--------|-------------|----------------|--------------|
-| example1.mp | 52 | 7 | 14 | Básico |
-| example2.mp | 109 | 4 | 41 | Médio |
-| example3.mp | 163 | 4 | 59 | Médio |
-| example4.mp | 228 | 5 | 80 | Médio-Alto |
-| example5.mp | 176 | 5 | 49 | Médio |
-| example6.mp | 466 | 7 | 165 | Alto |
-| example7.mp | 329 | 19 | 101 | Alto |
-
----
-
-## 🎯 Recursos Demonstrados por Exemplo
-
-| Recurso | Ex1 | Ex2 | Ex3 | Ex4 | Ex5 | Ex6 | Ex7 |
-|---------|-----|-----|-----|-----|-----|-----|-----|
-| Tipo `number` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Tipo `string` | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Tipo `bool` | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Tipo `void` | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Tipo `func` | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Tipo `c_channel` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Tipo `s_channel` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Aritmética | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Lógica Booleana | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Condicionais | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Loops | ❌ | ❌ | ✅ | ✅ | ❌ | ✅ | ✅ |
-| Recursão | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Múltiplas Funções | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-
----
-
-## 📖 Sugestão de Ordem de Estudo
-
-Para aprender Minipar, recomendamos estudar os exemplos nesta ordem:
-
-1. **example1.mp** - Comece aqui! Tipos básicos e aritmética
-2. **example2.mp** - Aprenda sobre funções e recursão
-3. **example3.mp** - Entenda loops e controle de fluxo
-4. **example4.mp** - Domine lógica booleana
-5. **example5.mp** - Trabalhe com strings
-6. **example6.mp** - Aplique em algoritmos complexos
-7. **example7.mp** - Veja todos os tipos juntos
-
----
-
-## 🔍 Analisando o Código de Três Endereços (TAC)
-
-Cada exemplo gera código intermediário no formato TAC. Para ver o código gerado:
+Para compilar qualquer exemplo:
 
 ```bash
-python compile.py examples/example1.mp
+# Usando Python diretamente
+python compile.py examples/ex1.minipar
+
+# Ou usando UV (recomendado)
+uv run compile.py examples/ex1.minipar
+
+# Mostrar tokens durante compilação
+python compile.py examples/ex1.minipar --tokens
+
+# Mostrar AST durante compilação
+python compile.py examples/ex1.minipar --ast
+
+# Mostrar ambos
+python compile.py examples/ex1.minipar --tokens --ast
 ```
 
-Saída típica:
-```
-=== Three-Address Code ===
-  0: inteiro = 10
-  1: real = 3.14
-  2: t0 = inteiro + real
-  3: soma = t0
-  ...
-```
+## 📖 Notas Importantes
 
-**Formato das instruções:**
-- `var = valor` - Atribuição
-- `t0 = x + y` - Operação binária
-- `IF_FALSE t0 GOTO L1` - Salto condicional
-- `LABEL L0` - Label (rótulo)
-- `FUNC_BEGIN nome` - Início de função
-- `CALL func n_args result` - Chamada de função
+1. **Sem Ponto e Vírgula**: A linguagem MiniPar não requer ponto e vírgula (`;`) no final das declarações.
 
----
+2. **Tipagem Explícita**: Todas as variáveis e parâmetros devem ter tipos declarados explicitamente.
 
-## ✅ Testes
+3. **Anotação de Tipo**: Usa-se `:` para anotação de tipo e `->` para tipo de retorno de funções.
 
-Todos os exemplos são testados automaticamente:
+4. **Indentação**: Embora não seja obrigatória como em Python, uma boa indentação melhora a legibilidade.
 
-```bash
-python run_tests.py
+5. **Extensão de Arquivo**: Use `.minipar` como extensão para arquivos da linguagem MiniPar.
+
+## 🎯 Recursos Avançados
+
+### Compreensão de Lista
+```minipar
+var quadrados: list = [for (var i: number in numeros) -> i * i]
 ```
 
-Saída esperada:
-```
-Testing Full Examples...
-  ✓ Basic types and arithmetic (example1.mp)
-  ✓ Functions with different return types (example2.mp)
-  ✓ Loops and control flow (example3.mp)
-  ✓ Boolean logic and operations (example4.mp)
-  ✓ String operations and multiple types (example5.mp)
-  ✓ Complex algorithms (example6.mp)
-  ✓ All Minipar types demonstration (example7.mp)
-✅ Example tests completed!
+### Métodos de String
+```minipar
+var texto: string = "  exemplo  "
+var limpo: string = texto.strip()
+var partes: list = texto.split(" ")
 ```
 
----
+### Métodos de Lista
+```minipar
+var lista: list = [1, 2, 3]
+lista.append(4)
+var tamanho: number = len(lista)
+```
 
-## 💡 Dicas
+### Operações com Dicionários
+```minipar
+var pessoa: dict = {"nome": "João", "idade": 25}
+var chaves: list = pessoa.keys()
+var valores: list = pessoa.values()
+var itens: list = pessoa.items()
+```
 
-1. **Comece simples**: Use example1.mp como base
-2. **Experimente**: Modifique os exemplos e veja o TAC gerado
-3. **Compare**: Veja como diferentes construções geram TAC diferente
-4. **Debug**: Use `--tokens` e `--ast` para entender o processo
-5. **Combine**: Crie seus próprios exemplos combinando conceitos
+## 🔧 Dicas de Programação
 
----
+1. **Sempre declare o tipo**: Isso ajuda na detecção de erros e melhora a legibilidade.
+   
+2. **Use nomes descritivos**: Prefira `contador` a `c`, `resultado` a `r`.
 
-## 📚 Recursos Adicionais
+3. **Comente código complexo**: Especialmente algoritmos e lógicas não óbvias.
 
-- **Manual de Referência**: Consulte a especificação da linguagem
-- **Documentação**: Veja `docs/` para mais informações
-- **Arquitetura**: Leia `docs/ARCHITECTURE.md` para entender o compilador
+4. **Teste incrementalmente**: Compile e teste pequenas partes do código antes de adicionar mais funcionalidades.
 
----
+5. **Verifique os tipos**: Certifique-se de que os tipos nas operações são compatíveis.
 
-**Última Atualização:** Outubro 2025  
-**Status:** ✅ Todos os exemplos funcionando  
-**Compatibilidade:** Python 3.7+, Windows/Linux/macOS
+## 📚 Recursos de Aprendizado
+
+Para aprender mais sobre a linguagem MiniPar:
+- Consulte a [documentação principal](../README.md)
+- Estude os exemplos fornecidos
+- Experimente modificar os exemplos existentes
+- Crie seus próprios programas
+
+## 🤝 Contribuindo
+
+Sinta-se à vontade para adicionar novos exemplos que demonstrem recursos interessantes da linguagem!
+
+## ⚠️ Recursos Não Implementados (Atualmente)
+
+Alguns dos exemplos mais avançados utilizam recursos que ainda não foram implementados no compilador:
+
+1. **Métodos de Objetos** (`object.method()`): Exemplos como `client.minipar` que usam `client.send()` e `client.close()` ainda não são suportados.
+
+2. **Execução Paralela** (`par { }`): O construto `par` para execução paralela (ex4.minipar) ainda não foi implementado.
+
+3. **List Comprehension Avançada**: Compreensões de lista complexas (quicksort.minipar, recomendacao.minipar) ainda não são totalmente suportadas.
+
+4. **Dicionários e Métodos de Coleções**: Operações avançadas com dicionários e métodos como `.keys()`, `.values()`, `.items()`, `.append()`, etc.
+
+5. **Slicing de Listas**: Operações como `array[1:]` para obter sublistas.
+
+6. **Funções Built-in Avançadas**: Funções como `pow()`, `sqrt()`, `sum()`, `intersection()`, `sort()`, `contains()`, etc.
+
+### Exemplos que Compilam com Sucesso
+
+Os seguintes exemplos compilam e geram código intermediário corretamente:
+- ✅ **ex1.minipar** - Variáveis, funções, loops e controle de fluxo
+- ✅ **ex2.minipar** - Declarações de canais e tipos básicos
+- ✅ **ex3.minipar** - Loops while, if-else e entrada de usuário
+- ✅ **ex5.minipar** - Funções simples com parâmetros
+- ✅ **fatorial_rec.minipar** - Recursão e estruturas de controle
+
+### Exemplos com Recursos Não Implementados
+
+Estes exemplos contêm sintaxe válida MiniPar mas requerem recursos ainda não implementados:
+- ⚠️ **ex4.minipar** - Usa `par { }` para execução paralela
+- ⚠️ **client.minipar** - Usa métodos de objetos (`client.send()`)
+- ⚠️ **quicksort.minipar** - Usa list comprehension e métodos de lista
+- ⚠️ **recomendacao.minipar** - Usa dicionários, métodos de coleções e funções built-in avançadas
