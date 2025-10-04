@@ -20,10 +20,10 @@ if sys.platform == 'win32':
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from lexer import Lexer, TokenType
-from parser import Parser
-from codegen import CodeGenerator
-from compiler import compile_source
+from src.lexer import Lexer, TokenType
+from src.parser import Parser
+from src.codegen import CodeGenerator
+from src.compiler import compile_source
 
 
 def test_lexer():
