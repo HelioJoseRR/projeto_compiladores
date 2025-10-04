@@ -31,7 +31,7 @@ dev = []
 
 [project.scripts]
 minipar = "minipar:main"
-minipar-test = "tests.test_compiler:main"
+minipar-test = "tests.test_compilerok:main"
 minipar-compile = "src.compiler:main"
 
 [build-system]
