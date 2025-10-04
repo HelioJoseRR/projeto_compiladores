@@ -16,7 +16,10 @@ class TAC:
         self.result = result
     
     def __repr__(self):
-        if self.op in ['LABEL', 'GOTO', 'PARAM', 'CALL', 'RETURN', 'FUNC_BEGIN', 'FUNC_END']:
+        if self.op == 'CALL':
+            # CALL nome_funcao n_args resultado
+            return f"{self.op} {self.arg1} {self.arg2} {self.result}"
+        elif self.op in ['LABEL', 'GOTO', 'PARAM', 'RETURN', 'FUNC_BEGIN', 'FUNC_END']:
             if self.arg1:
                 return f"{self.op} {self.arg1}"
             return self.op

@@ -6,14 +6,37 @@ Um compilador frontend completo para a linguagem Minipar, implementado em Python
 
 ```
 projeto_compiladores/
-├── lexer.py           # Análise Léxica (Tokenização)
-├── ast_nodes.py       # Definições dos nós da AST
-├── parser.py          # Análise Sintática (Parser)
-├── codegen.py         # Geração de Código Intermediário (3-endereços)
-├── compiler.py        # Driver principal do compilador
-├── test_compiler.py   # Suite de testes
-├── example*.mp        # Programas de exemplo em Minipar
-└── README.md          # Este arquivo
+├── src/                   # Código fonte do compilador
+│   ├── __init__.py       # Inicialização do pacote
+│   ├── lexer.py          # Análise Léxica (Tokenização)
+│   ├── ast_nodes.py      # Definições dos nós da AST
+│   ├── parser.py         # Análise Sintática (Parser)
+│   ├── codegen.py        # Geração de Código Intermediário
+│   └── compiler.py       # Driver principal do compilador
+├── examples/             # Programas de exemplo em Minipar
+│   ├── example1.mp       # Aritmética básica
+│   ├── example2.mp       # Fatorial recursivo
+│   ├── example3.mp       # Loop while
+│   ├── example4.mp       # Lógica booleana
+│   ├── example5.mp       # Manipulação de strings
+│   └── example6.mp       # Algoritmos complexos
+├── tests/                # Testes do compilador
+│   └── test_compiler.py  # Suite de testes
+├── docs/                 # Documentação completa
+│   ├── QUICKSTART.md
+│   ├── USAGE.md
+│   ├── ARCHITECTURE.md
+│   ├── PROJECT_SUMMARY.md
+│   ├── INDEX.md
+│   ├── UV_GUIDE.md
+│   ├── UV_QUICK_REFERENCE.md
+│   └── UV_SETUP.md
+├── compile.py            # Script para compilar (atalho)
+├── run_tests.py          # Script para executar testes
+├── minipar.py            # Ponto de entrada principal
+├── pyproject.toml        # Configuração do projeto
+├── uv.lock              # Lock file UV
+└── README.md            # Este arquivo
 ```
 
 ## 🚀 Componentes do Compilador
@@ -65,10 +88,10 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"  # Windows
 uv sync
 
 # Executar compilador
-uv run compiler.py example1.mp
+uv run compile.py examples/example1.mp
 
 # Executar testes
-uv run test_compiler.py
+uv run run_tests.py
 ```
 
 **Vantagens do UV:**
@@ -76,23 +99,43 @@ uv run test_compiler.py
 - 🔒 Builds determinísticos com `uv.lock`
 - 📦 Gerenciamento automático de ambiente virtual
 
-📖 **Guia completo**: [UV_GUIDE.md](UV_GUIDE.md)
+📖 **Guia completo**: [docs/UV_GUIDE.md](docs/UV_GUIDE.md)
 
 ### Método 2: Tradicional com Python
 
 ```bash
 # Executar compilador
-python compiler.py example1.mp
+python compile.py examples/example1.mp
 # ou
-py compiler.py example1.mp
+py compile.py examples/example1.mp
 
 # Executar testes
-python test_compiler.py
+python run_tests.py
 ```
 
 **Nota**: Este projeto **não tem dependências externas** - usa apenas a biblioteca padrão do Python!
 
 ### Executar o Compilador
+
+```bash
+# Compilar um arquivo Minipar
+python compile.py examples/example1.mp
+
+# Mostrar tokens durante compilação
+python compile.py examples/example1.mp --tokens
+
+# Mostrar AST durante compilação
+python compile.py examples/example1.mp --ast
+
+# Mostrar ambos
+python compile.py examples/example1.mp --tokens --ast
+```
+
+### Executar Testes
+
+```bash
+python run_tests.py
+```
 
 ```bash
 # Compilar um arquivo Minipar

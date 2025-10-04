@@ -9,11 +9,16 @@ import io
 
 # Fix encoding for Windows console
 if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except AttributeError:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 # Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from lexer import Lexer, TokenType
 from parser import Parser
@@ -178,25 +183,30 @@ def test_codegen():
 def test_full_examples():
     print("Testing Full Examples...")
     
+    # Get examples directory path
+    examples_dir = os.path.join(os.path.dirname(__file__), '..', 'examples')
+    
     examples = [
         ("example1.mp", "Simple arithmetic"),
         ("example2.mp", "Factorial function"),
         ("example3.mp", "While loop"),
         ("example4.mp", "Boolean logic"),
         ("example5.mp", "String operations"),
+        ("example6.mp", "Complex algorithms"),
     ]
     
     for filename, description in examples:
-        if os.path.exists(filename):
+        filepath = os.path.join(examples_dir, filename)
+        if os.path.exists(filepath):
             try:
-                with open(filename, 'r') as f:
+                with open(filepath, 'r', encoding='utf-8') as f:
                     source = f.read()
                 compile_source(source, show_tokens=False, show_ast=False)
                 print(f"  ✓ {description} ({filename})")
             except Exception as e:
                 print(f"  ❌ {description} ({filename}): {e}")
         else:
-            print(f"  ⚠ {filename} not found")
+            print(f"  ⚠ {filename} not found at {filepath}")
     
     print("✅ Example tests completed!\n")
 

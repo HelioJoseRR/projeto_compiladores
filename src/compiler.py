@@ -4,9 +4,20 @@ Frontend compiler that performs lexical analysis, parsing, and intermediate code
 """
 
 import sys
+import io
 from lexer import Lexer
 from parser import Parser
 from codegen import CodeGenerator
+
+# Fix encoding for Windows console
+if sys.platform == 'win32':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except AttributeError:
+        # Python < 3.7
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 
 def compile_source(source: str, show_tokens: bool = False, show_ast: bool = False):
