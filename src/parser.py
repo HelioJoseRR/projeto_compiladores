@@ -4,8 +4,12 @@ Performs syntax analysis and builds an Abstract Syntax Tree (AST)
 """
 
 from typing import List, Optional
-from lexer import Token, TokenType, Lexer
-from ast_nodes import *
+try:
+    from src.lexer import Token, TokenType, Lexer
+    from src.ast_nodes import *
+except ImportError:
+    from lexer import Token, TokenType, Lexer
+    from ast_nodes import *
 
 
 class Parser:

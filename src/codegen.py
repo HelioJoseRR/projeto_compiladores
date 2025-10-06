@@ -4,7 +4,10 @@ Generates three-address code from AST
 """
 
 from typing import List, Dict, Optional
-from ast_nodes import *
+try:
+    from src.ast_nodes import *
+except ImportError:
+    from ast_nodes import *
 
 
 class TAC:

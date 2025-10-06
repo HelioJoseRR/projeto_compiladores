@@ -5,9 +5,14 @@ Frontend compiler that performs lexical analysis, parsing, and intermediate code
 
 import sys
 import io
-from lexer import Lexer
-from parser import Parser
-from codegen import CodeGenerator
+try:
+    from src.lexer import Lexer
+    from src.parser import Parser
+    from src.codegen import CodeGenerator
+except ImportError:
+    from lexer import Lexer
+    from parser import Parser
+    from codegen import CodeGenerator
 
 # Fix encoding for Windows console
 if sys.platform == 'win32':
