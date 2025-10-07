@@ -5,7 +5,7 @@
 O compilador Minipar segue uma arquitetura clássica de compilador em três fases:
 
 ```
-Código Fonte (.mp)
+Código Fonte (.minipar)
         ↓
    [LEXER] → Tokens
         ↓
@@ -282,7 +282,7 @@ Processa argumentos da linha de comando e chama compile_file
 
 ```
 ┌─────────────────┐
-│  example.mp     │  Arquivo fonte
+│ example.minipar │  Arquivo fonte
 └────────┬────────┘
          │ read
          ↓
