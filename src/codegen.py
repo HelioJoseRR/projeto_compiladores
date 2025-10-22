@@ -25,7 +25,12 @@ class TAC:
         elif self.op == 'CHANNEL_CREATE':
             # CHANNEL_CREATE channel_type name args
             return f"{self.op} {self.arg1} {self.arg2} {{{self.result}}}"
-        elif self.op in ['LABEL', 'GOTO', 'PARAM', 'RETURN', 'FUNC_BEGIN', 'FUNC_END']:
+        elif self.op == 'METHOD_CALL':
+            # METHOD_CALL object method result
+            return f"{self.op} {self.arg1}.{self.arg2} {self.result}"
+        elif self.op in ['LABEL', 'GOTO', 'PARAM', 'RETURN', 'FUNC_BEGIN', 'FUNC_END',
+                         'SEQ_BEGIN', 'SEQ_END', 'PAR_BEGIN', 'PAR_END',
+                         'THREAD_START', 'THREAD_END', 'METHOD_ARGS']:
             if self.arg1:
                 return f"{self.op} {self.arg1}"
             return self.op
@@ -47,6 +52,8 @@ class CodeGenerator:
         self.temp_count = 0
         self.label_count = 0
         self.symbol_table: Dict[str, str] = {}
+        # Stack to track loop labels for break/continue
+        self.loop_stack: List[tuple] = []  # [(start_label, end_label), ...]
     
     def new_temp(self) -> str:
         """Generate a new temporary variable"""
@@ -135,12 +142,18 @@ class CodeGenerator:
         start_label = self.new_label()
         end_label = self.new_label()
         
+        # Push loop labels onto stack for break/continue
+        self.loop_stack.append((start_label, end_label))
+        
         self.emit('LABEL', start_label)
         condition = self.generate(node.condition)
         self.emit('IF_FALSE', condition, None, end_label)
         self.generate(node.body)
         self.emit('GOTO', start_label)
         self.emit('LABEL', end_label)
+        
+        # Pop loop labels from stack
+        self.loop_stack.pop()
     
     def gen_ReturnStmt(self, node: ReturnStmt) -> None:
         if node.value:
@@ -150,10 +163,18 @@ class CodeGenerator:
             self.emit('RETURN')
     
     def gen_BreakStmt(self, node: BreakStmt) -> None:
-        self.emit('BREAK')
+        """Generate code for break statement - jump to end of current loop"""
+        if not self.loop_stack:
+            raise RuntimeError("Break statement outside of loop")
+        _, end_label = self.loop_stack[-1]
+        self.emit('GOTO', end_label)
     
     def gen_ContinueStmt(self, node: ContinueStmt) -> None:
-        self.emit('CONTINUE')
+        """Generate code for continue statement - jump to start of current loop"""
+        if not self.loop_stack:
+            raise RuntimeError("Continue statement outside of loop")
+        start_label, _ = self.loop_stack[-1]
+        self.emit('GOTO', start_label)
     
     def gen_ExprStmt(self, node: ExprStmt) -> None:
         self.generate(node.expression)
@@ -196,6 +217,36 @@ class CodeGenerator:
     
     def gen_BoolLiteral(self, node: BoolLiteral) -> str:
         return str(node.value).lower()
+    
+    def gen_SeqBlock(self, node: 'SeqBlock') -> None:
+        """Generate code for SEQ block - sequential execution (default behavior)"""
+        self.emit('SEQ_BEGIN')
+        for stmt in node.statements:
+            self.generate(stmt)
+        self.emit('SEQ_END')
+    
+    def gen_ParBlock(self, node: 'ParBlock') -> None:
+        """Generate code for PAR block - parallel execution with threads"""
+        self.emit('PAR_BEGIN')
+        for i, stmt in enumerate(node.statements):
+            # Each statement in PAR block will be executed in a separate thread
+            self.emit('THREAD_START', i)
+            self.generate(stmt)
+            self.emit('THREAD_END', i)
+        self.emit('PAR_END')
+    
+    def gen_MethodCall(self, node: 'MethodCall') -> str:
+        """Generate code for method call - obj.method(args)"""
+        # Generate code for arguments
+        for arg in node.arguments:
+            arg_result = self.generate(arg)
+            self.emit('PARAM', arg_result)
+        
+        # Generate method call instruction
+        result = self.new_temp()
+        self.emit('METHOD_CALL', node.object, node.method, result)
+        self.emit('METHOD_ARGS', len(node.arguments))
+        return result
     
     def print_code(self):
         """Print the generated three-address code"""

@@ -17,9 +17,6 @@ class Parser:
         self.tokens = tokens
         self.pos = 0
     
-    def error(self, msg: str):
-        token = self.current()
-        raise SyntaxError(f"Parser error at {token.line}:{token.column}: {msg}")
     
     def current(self) -> Token:
         return self.tokens[self.pos] if self.pos < len(self.tokens) else self.tokens[-1]
@@ -43,6 +40,11 @@ class Parser:
             self.error(msg)
         return self.advance()
     
+    def error(self, msg: str):
+        token = self.current()
+        raise SyntaxError(f"Parser error at {token.line}:{token.column}: {msg}")
+    
+    
     def parse(self) -> Program:
         declarations = []
         while not self.match(TokenType.EOF):
@@ -56,6 +58,10 @@ class Parser:
             return self.var_declaration()
         elif self.match(TokenType.S_CHANNEL, TokenType.C_CHANNEL):
             return self.channel_declaration()
+        elif self.match(TokenType.SEQ):
+            return self.seq_block()
+        elif self.match(TokenType.PAR):
+            return self.par_block()
         else:
             # Could be a statement (function call, assignment, etc.)
             return self.statement()
@@ -184,6 +190,10 @@ class Parser:
             return self.if_statement()
         elif self.match(TokenType.WHILE):
             return self.while_statement()
+        elif self.match(TokenType.SEQ):
+            return self.seq_block()
+        elif self.match(TokenType.PAR):
+            return self.par_block()
         elif self.match(TokenType.RETURN):
             return self.return_statement()
         elif self.match(TokenType.BREAK):
@@ -249,6 +259,30 @@ class Parser:
         if self.match(TokenType.SEMICOLON):
             self.advance()
         return ContinueStmt()
+    
+    def seq_block(self) -> 'SeqBlock':
+        """Parse SEQ { stmts } - sequential execution block"""
+        self.consume(TokenType.SEQ)
+        self.consume(TokenType.LBRACE)
+        
+        statements = []
+        while not self.match(TokenType.RBRACE) and not self.match(TokenType.EOF):
+            statements.append(self.statement())
+        
+        self.consume(TokenType.RBRACE)
+        return SeqBlock(statements)
+    
+    def par_block(self) -> 'ParBlock':
+        """Parse PAR { stmts } - parallel execution block"""
+        self.consume(TokenType.PAR)
+        self.consume(TokenType.LBRACE)
+        
+        statements = []
+        while not self.match(TokenType.RBRACE) and not self.match(TokenType.EOF):
+            statements.append(self.statement())
+        
+        self.consume(TokenType.RBRACE)
+        return ParBlock(statements)
     
     def expression_statement(self) -> ExprStmt:
         expr = self.expression()
@@ -345,22 +379,51 @@ class Parser:
     def call(self) -> ASTNode:
         expr = self.primary()
         
-        if self.match(TokenType.LPAREN):
-            self.advance()
-            arguments = []
-            
-            if not self.match(TokenType.RPAREN):
-                arguments.append(self.expression())
-                while self.match(TokenType.COMMA):
+        while True:
+            # Handle method calls: obj.method()
+            if self.match(TokenType.DOT):
+                self.advance()
+                method_name = self.consume(TokenType.IDENTIFIER, "Expected method name after '.'").value
+                
+                if self.match(TokenType.LPAREN):
                     self.advance()
+                    arguments = []
+                    
+                    if not self.match(TokenType.RPAREN):
+                        arguments.append(self.expression())
+                        while self.match(TokenType.COMMA):
+                            self.advance()
+                            arguments.append(self.expression())
+                    
+                    self.consume(TokenType.RPAREN)
+                    
+                    # Create MethodCall node
+                    if isinstance(expr, Variable):
+                        expr = MethodCall(expr.name, method_name, arguments)
+                    else:
+                        self.error("Method calls require a variable object")
+                else:
+                    self.error("Expected '(' after method name")
+            
+            # Handle regular function calls: func()
+            elif self.match(TokenType.LPAREN):
+                self.advance()
+                arguments = []
+                
+                if not self.match(TokenType.RPAREN):
                     arguments.append(self.expression())
-            
-            self.consume(TokenType.RPAREN)
-            
-            if isinstance(expr, Variable):
-                return FuncCall(expr.name, arguments)
+                    while self.match(TokenType.COMMA):
+                        self.advance()
+                        arguments.append(self.expression())
+                
+                self.consume(TokenType.RPAREN)
+                
+                if isinstance(expr, Variable):
+                    expr = FuncCall(expr.name, arguments)
+                else:
+                    self.error("Invalid function call")
             else:
-                self.error("Invalid function call")
+                break
         
         return expr
     

@@ -92,7 +92,7 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"  # Windows
 uv sync
 
 # Executar compilador
-uv run compile.py examples/example1.mp
+uv run compile.py examples/ex1.minipar
 
 # Executar testes
 uv run run_tests.py

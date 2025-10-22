@@ -21,6 +21,7 @@ class TokenType(Enum):
     PAR = auto()
     RETURN = auto()
     S_CHANNEL = auto()
+    SEQ = auto()  # NEW: Sequential block keyword
     TRUE = auto()
     VAR = auto()
     WHILE = auto()
@@ -103,6 +104,7 @@ class Lexer:
         'par': TokenType.PAR,
         'return': TokenType.RETURN,
         's_channel': TokenType.S_CHANNEL,
+        'seq': TokenType.SEQ,  # NEW: SEQ keyword
         'true': TokenType.TRUE,
         'var': TokenType.VAR,
         'while': TokenType.WHILE,
