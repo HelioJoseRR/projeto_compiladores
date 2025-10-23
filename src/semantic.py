@@ -401,10 +401,12 @@ class SemanticAnalyzer:
         # For channels, allow send, receive, close methods
         if symbol.symbol_type == SymbolType.CHANNEL:
             if node.method in ['send', 'receive', 'close']:
-                if node.method == 'receive':
+                if node.method == 'send':
+                    return "string"  # send returns response string from server
+                elif node.method == 'receive':
                     return "string"  # receive returns string
-                else:
-                    return "void"  # send and close return void
+                else:  # close
+                    return "void"  # close returns void
             else:
                 self.add_error(f"Unknown method '{node.method}' for channel '{node.object}'")
                 return "any"
