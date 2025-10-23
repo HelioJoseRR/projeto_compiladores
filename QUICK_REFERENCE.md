@@ -47,6 +47,7 @@ py compile.py <file> --generate-c    # To C
 py compile.py <file> --exe           # To executable
 py compile.py <file> --tokens        # Show tokens
 py compile.py <file> --ast           # Show AST
+py compile.py --tokens --ast <file>  # Flags before or after
 ```
 
 ### Run Tests

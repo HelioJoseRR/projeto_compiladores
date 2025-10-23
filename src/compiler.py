@@ -191,7 +191,9 @@ def compile_file(filename: str, show_tokens: bool = False, show_ast: bool = Fals
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python compiler.py <source_file> [options]")
+        print("Usage: python compiler.py [options] <source_file>")
+        print("   or: python compiler.py <source_file> [options]")
+        print()
         print("Options:")
         print("  --tokens: Show token stream")
         print("  --ast: Show abstract syntax tree")
@@ -203,7 +205,21 @@ def main():
         print("  --arch <arch>: Target architecture (native, armv7, x86_64)")
         sys.exit(1)
     
-    filename = sys.argv[1]
+    # Find the filename (first non-flag argument)
+    filename = None
+    for arg in sys.argv[1:]:
+        if not arg.startswith('--') and arg != sys.argv[0]:
+            # Skip if it's a value for a flag
+            prev_idx = sys.argv.index(arg) - 1
+            if prev_idx > 0 and sys.argv[prev_idx] in ['--output', '--arch']:
+                continue
+            filename = arg
+            break
+    
+    if not filename:
+        print("Error: No source file specified")
+        sys.exit(1)
+    
     show_tokens = '--tokens' in sys.argv
     show_ast = '--ast' in sys.argv
     show_semantic = '--semantic' in sys.argv
