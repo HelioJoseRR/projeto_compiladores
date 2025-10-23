@@ -31,6 +31,7 @@ class Backend:
         """
         self.target_arch = target_arch
         self.gcc_path = self._find_gcc()
+        self.has_cross_compiler = False  # Track if we have proper cross-compiler
         
     def _find_gcc(self) -> str:
         """Find appropriate GCC compiler for target architecture"""
@@ -43,10 +44,14 @@ class Backend:
             ]
             for compiler in compilers:
                 if self._command_exists(compiler):
+                    self.has_cross_compiler = True
                     return compiler
             # Fallback to native GCC with warning
-            print("⚠️  Warning: ARM cross-compiler not found, using native GCC")
+            print("⚠️  Warning: ARM cross-compiler not found")
+            print("   Cannot compile for ARM architecture without cross-compiler")
             print("   Install with: sudo apt-get install gcc-arm-linux-gnueabihf")
+            print("   Falling back to native compilation...")
+            self.target_arch = "native"  # Reset to native if no cross-compiler
             return "gcc"
         else:
             # Use native GCC
@@ -86,8 +91,8 @@ class Backend:
         # Build GCC command
         cmd = [self.gcc_path, "-S", f"-O{optimization}"]
         
-        # Add architecture-specific flags
-        if self.target_arch == "armv7":
+        # Add architecture-specific flags (only if we have proper cross-compiler)
+        if self.target_arch == "armv7" and self.has_cross_compiler:
             cmd.extend([
                 "-march=armv7-a",
                 "-mfloat-abi=hard",
@@ -141,8 +146,8 @@ class Backend:
         # Build GCC command
         cmd = [self.gcc_path, f"-O{optimization}"]
         
-        # Add architecture-specific flags
-        if self.target_arch == "armv7":
+        # Add architecture-specific flags (only if we have proper cross-compiler)
+        if self.target_arch == "armv7" and self.has_cross_compiler:
             cmd.extend([
                 "-march=armv7-a",
                 "-mfloat-abi=hard",

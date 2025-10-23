@@ -133,7 +133,7 @@ def compile_source(source: str, show_tokens: bool = False, show_ast: bool = Fals
             # Get backend info
             info = backend.get_info()
             print(f"GCC: {info.get('gcc_version', 'Unknown')}")
-            print(f"Architecture: {target_arch}\n")
+            print(f"Architecture: {backend.target_arch}\n")  # Use backend's arch (may have changed)
             
             # Determine output filenames
             import os
