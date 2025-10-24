@@ -1,4 +1,18 @@
-# 🔄 Switching from x86 to ARMv7 Assembly
+# 🔄 ARM Compilation Guide - DEPRECATED
+
+**⚠️ NOTICE: This feature has been removed.**
+
+The `--arch` and `--asm` flags have been removed from the compiler as they were incorrectly implemented. 
+
+The compiler now only supports native compilation to executables using GCC.
+
+For the current compiler capabilities, see:
+- [README.md](../../README.md)
+- [TUTORIAL.md](TUTORIAL.md)
+
+---
+
+## Original Documentation (For Reference Only)
 
 **Quick Guide to Targeting Different Architectures**
 

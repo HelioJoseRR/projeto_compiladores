@@ -34,9 +34,9 @@ if sys.platform == 'win32':
 
 def compile_source(source: str, show_tokens: bool = False, show_ast: bool = False, 
                    show_semantic: bool = False, generate_c: bool = False, c_output: str = None,
-                   compile_asm: bool = False, compile_exe: bool = False, target_arch: str = "native"):
+                   compile_exe: bool = False):
     """
-    Compile Minipar source code to three-address code and optionally C code, assembly, or executable
+    Compile Minipar source code to three-address code and optionally C code or executable
     
     Args:
         source: Source code string
@@ -45,9 +45,7 @@ def compile_source(source: str, show_tokens: bool = False, show_ast: bool = Fals
         show_semantic: If True, print semantic analysis details
         generate_c: If True, generate C code
         c_output: Output filename for C code (default: output.c)
-        compile_asm: If True, compile to assembly
         compile_exe: If True, compile to executable
-        target_arch: Target architecture (native, armv7, x86_64)
     
     Returns:
         Tuple of (CodeGenerator, CCodeGenerator if generated)
@@ -110,7 +108,7 @@ def compile_source(source: str, show_tokens: bool = False, show_ast: bool = Fals
         else:
             c_filename = "output.c"
         
-        if generate_c or compile_asm or compile_exe:
+        if generate_c or compile_exe:
             print("\n" + "=" * 60)
             print("=== C Code Generation ===")
             c_gen = CCodeGenerator()
@@ -125,37 +123,26 @@ def compile_source(source: str, show_tokens: bool = False, show_ast: bool = Fals
             c_gen.save_to_file(c_filename)
         
         # Backend compilation (if requested)
-        if compile_asm or compile_exe:
+        if compile_exe:
             print("\n" + "=" * 60)
             print("=== Backend Compilation ===")
-            backend = Backend(target_arch=target_arch)
+            backend = Backend()
             
             # Get backend info
             info = backend.get_info()
-            print(f"GCC: {info.get('gcc_version', 'Unknown')}")
-            print(f"Architecture: {backend.target_arch}\n")  # Use backend's arch (may have changed)
+            print(f"GCC: {info.get('gcc_version', 'Unknown')}\n")
             
             # Determine output filenames
             import os
             base_name = os.path.splitext(c_filename)[0]
-            asm_file = f"{base_name}.s"
             exe_file = f"{base_name}.exe" if sys.platform == "win32" else base_name
             
-            # Compile to assembly
-            if compile_asm:
-                print("Compiling to assembly...")
-                success, msg = backend.compile_to_assembly(c_filename, asm_file)
-                print(msg)
-                if not success:
-                    sys.exit(1)
-            
             # Compile to executable
-            if compile_exe:
-                print("\nCompiling to executable...")
-                success, msg = backend.compile_to_executable(c_filename, exe_file)
-                print(msg)
-                if not success:
-                    sys.exit(1)
+            print("Compiling to executable...")
+            success, msg = backend.compile_to_executable(c_filename, exe_file)
+            print(msg)
+            if not success:
+                sys.exit(1)
             
             print("=" * 60)
         
@@ -173,7 +160,7 @@ def compile_source(source: str, show_tokens: bool = False, show_ast: bool = Fals
 
 def compile_file(filename: str, show_tokens: bool = False, show_ast: bool = False, 
                  show_semantic: bool = False, generate_c: bool = False, c_output: str = None,
-                 compile_asm: bool = False, compile_exe: bool = False, target_arch: str = "native"):
+                 compile_exe: bool = False):
     """Compile a Minipar source file"""
     try:
         with open(filename, 'r', encoding='utf-8') as f:
@@ -182,7 +169,7 @@ def compile_file(filename: str, show_tokens: bool = False, show_ast: bool = Fals
         print(f"Compiling: {filename}")
         print("=" * 60)
         return compile_source(source, show_tokens, show_ast, show_semantic, generate_c, c_output,
-                            compile_asm, compile_exe, target_arch)
+                            compile_exe)
         
     except FileNotFoundError:
         print(f"❌ Error: File '{filename}' not found")
@@ -200,9 +187,7 @@ def main():
         print("  --semantic: Show semantic analysis details")
         print("  --generate-c: Generate C code")
         print("  --output <file>: Specify C output file (default: output.c)")
-        print("  --asm: Compile to assembly")
         print("  --exe: Compile to executable")
-        print("  --arch <arch>: Target architecture (native, armv7, x86_64)")
         sys.exit(1)
     
     # Find the filename (first non-flag argument)
@@ -211,7 +196,7 @@ def main():
         if not arg.startswith('--') and arg != sys.argv[0]:
             # Skip if it's a value for a flag
             prev_idx = sys.argv.index(arg) - 1
-            if prev_idx > 0 and sys.argv[prev_idx] in ['--output', '--arch']:
+            if prev_idx > 0 and sys.argv[prev_idx] in ['--output']:
                 continue
             filename = arg
             break
@@ -224,7 +209,6 @@ def main():
     show_ast = '--ast' in sys.argv
     show_semantic = '--semantic' in sys.argv
     generate_c = '--generate-c' in sys.argv
-    compile_asm = '--asm' in sys.argv
     compile_exe = '--exe' in sys.argv
     
     c_output = None
@@ -233,14 +217,8 @@ def main():
         if idx + 1 < len(sys.argv):
             c_output = sys.argv[idx + 1]
     
-    target_arch = "native"
-    if '--arch' in sys.argv:
-        idx = sys.argv.index('--arch')
-        if idx + 1 < len(sys.argv):
-            target_arch = sys.argv[idx + 1]
-    
     compile_file(filename, show_tokens, show_ast, show_semantic, generate_c, c_output,
-                compile_asm, compile_exe, target_arch)
+                compile_exe)
 
 
 if __name__ == '__main__':

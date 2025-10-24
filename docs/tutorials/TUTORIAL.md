@@ -543,16 +543,10 @@ Fatorial:  3628800
 
 ```bash
 # Compile to executable
-py src\compiler.py <file.minipar> --exe
+py compile.py <file.minipar> --exe
 
 # Generate C code only
-py src\compiler.py <file.minipar> --generate-c
-
-# Generate assembly only
-py src\compiler.py <file.minipar> --asm
-
-# Both assembly and executable
-py src\compiler.py <file.minipar> --asm --exe
+py compile.py <file.minipar> --generate-c
 ```
 
 ### Debug Flags
@@ -566,24 +560,21 @@ py src\compiler.py <file.minipar> --asm --exe
 ### Output Options
 
 ```bash
---output <name>    # Specify output filename
---arch <arch>      # Target architecture (native, armv7, x86_64)
+--output <name>    # Specify C output filename
 ```
 
 ### Complete Flag List
 
 ```
-Usage: py src\compiler.py <source_file> [options]
+Usage: py compile.py <source_file> [options]
 
 Options:
   --tokens              Show token stream
   --ast                 Show abstract syntax tree
   --semantic            Show semantic analysis details
   --generate-c          Generate C code
-  --output <file>       Specify output file
-  --asm                 Compile to assembly
+  --output <file>       Specify C output file
   --exe                 Compile to executable
-  --arch <arch>         Target architecture
 ```
 
 ---

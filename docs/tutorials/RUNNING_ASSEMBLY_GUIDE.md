@@ -1,19 +1,31 @@
-# 🏃 How to Run Assembly Code
+# 🏃 How to Run Assembly Code - DEPRECATED
 
-**Complete Guide to Executing Generated Assembly Files**
+**⚠️ NOTICE: Assembly generation has been removed.**
+
+The `--asm` flag has been removed from the compiler as it was incorrectly implemented.
+
+The compiler now only generates executables directly using GCC.
 
 ---
 
-## 🎯 Quick Answer
+## 🎯 Current Method
 
-The **easiest way** is to generate the executable directly:
+The **only way** to compile programs is to generate the executable directly:
 
 ```bash
-py src\compiler.py program.minipar --exe
+py compile.py program.minipar --exe
 .\output.exe
 ```
 
-But if you want to work with assembly files specifically, read on!
+For the current compiler capabilities, see:
+- [README.md](../../README.md)
+- [TUTORIAL.md](TUTORIAL.md)
+
+---
+
+## Original Documentation (For Reference Only)
+
+**Complete Guide to Executing Generated Assembly Files**
 
 ---
 

@@ -18,44 +18,16 @@ class CompilationError(Exception):
 
 class Backend:
     """
-    Backend compiler that uses GCC to compile C code to assembly or executable
-    Supports multiple architectures including ARMv7
+    Backend compiler that uses GCC to compile C code to executable
     """
     
-    def __init__(self, target_arch: str = "native"):
-        """
-        Initialize backend with target architecture
-        
-        Args:
-            target_arch: Target architecture - "native", "armv7", "x86_64", etc.
-        """
-        self.target_arch = target_arch
+    def __init__(self):
+        """Initialize backend"""
         self.gcc_path = self._find_gcc()
-        self.has_cross_compiler = False  # Track if we have proper cross-compiler
         
     def _find_gcc(self) -> str:
-        """Find appropriate GCC compiler for target architecture"""
-        if self.target_arch == "armv7":
-            # Try ARM cross-compiler
-            compilers = [
-                "arm-linux-gnueabihf-gcc",
-                "arm-linux-gcc",
-                "armv7-linux-gnueabihf-gcc"
-            ]
-            for compiler in compilers:
-                if self._command_exists(compiler):
-                    self.has_cross_compiler = True
-                    return compiler
-            # Fallback to native GCC with warning
-            print("⚠️  Warning: ARM cross-compiler not found")
-            print("   Cannot compile for ARM architecture without cross-compiler")
-            print("   Install with: sudo apt-get install gcc-arm-linux-gnueabihf")
-            print("   Falling back to native compilation...")
-            self.target_arch = "native"  # Reset to native if no cross-compiler
-            return "gcc"
-        else:
-            # Use native GCC
-            return "gcc"
+        """Find GCC compiler"""
+        return "gcc"
     
     def _command_exists(self, command: str) -> bool:
         """Check if a command exists in PATH"""
@@ -68,65 +40,11 @@ class Backend:
         except FileNotFoundError:
             return False
     
-    def compile_to_assembly(
-        self, 
-        c_file: str, 
-        output_asm: str,
-        optimization: str = "2"
-    ) -> Tuple[bool, str]:
-        """
-        Compile C code to assembly
-        
-        Args:
-            c_file: Input C source file
-            output_asm: Output assembly file
-            optimization: GCC optimization level (0, 1, 2, 3, s)
-            
-        Returns:
-            (success, message) tuple
-        """
-        if not os.path.exists(c_file):
-            return False, f"Input file not found: {c_file}"
-        
-        # Build GCC command
-        cmd = [self.gcc_path, "-S", f"-O{optimization}"]
-        
-        # Add architecture-specific flags (only if we have proper cross-compiler)
-        if self.target_arch == "armv7" and self.has_cross_compiler:
-            cmd.extend([
-                "-march=armv7-a",
-                "-mfloat-abi=hard",
-                "-mfpu=vfpv3-d16"
-            ])
-        
-        # Add input/output files
-        cmd.extend([c_file, "-o", output_asm])
-        
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=False
-            )
-            
-            if result.returncode == 0:
-                return True, f"✓ Assembly generated: {output_asm}"
-            else:
-                error_msg = result.stderr if result.stderr else result.stdout
-                return False, f"GCC compilation failed:\n{error_msg}"
-                
-        except FileNotFoundError:
-            return False, f"GCC compiler not found: {self.gcc_path}"
-        except Exception as e:
-            return False, f"Compilation error: {str(e)}"
-    
     def compile_to_executable(
         self,
         c_file: str,
         output_exe: str,
-        optimization: str = "2",
-        link_pthread: bool = True
+        optimization: str = "2"
     ) -> Tuple[bool, str]:
         """
         Compile C code to executable
@@ -135,7 +53,6 @@ class Backend:
             c_file: Input C source file
             output_exe: Output executable file
             optimization: GCC optimization level
-            link_pthread: Link pthread library (not available on MinGW Windows)
             
         Returns:
             (success, message) tuple
@@ -145,18 +62,6 @@ class Backend:
         
         # Build GCC command
         cmd = [self.gcc_path, f"-O{optimization}"]
-        
-        # Add architecture-specific flags (only if we have proper cross-compiler)
-        if self.target_arch == "armv7" and self.has_cross_compiler:
-            cmd.extend([
-                "-march=armv7-a",
-                "-mfloat-abi=hard",
-                "-mfpu=vfpv3-d16"
-            ])
-        
-        # Add pthread if needed (skip on Windows/MinGW where it's not available)
-        if link_pthread and platform.system() != "Windows":
-            cmd.append("-pthread")
         
         # Add input/output files
         cmd.extend([c_file, "-o", output_exe])
@@ -184,7 +89,6 @@ class Backend:
         """Get backend information"""
         info = {
             "gcc_path": self.gcc_path,
-            "target_arch": self.target_arch,
             "gcc_available": self._command_exists(self.gcc_path)
         }
         
@@ -209,20 +113,16 @@ class Backend:
 def compile_minipar_pipeline(
     source_file: str,
     output_base: Optional[str] = None,
-    target_arch: str = "native",
-    generate_asm: bool = True,
     generate_exe: bool = True,
     keep_c: bool = True,
     optimization: str = "2"
 ) -> bool:
     """
-    Complete compilation pipeline: Minipar → C → Assembly/Executable
+    Complete compilation pipeline: Minipar → C → Executable
     
     Args:
         source_file: Input .minipar file
         output_base: Base name for output files (without extension)
-        target_arch: Target architecture
-        generate_asm: Generate assembly file
         generate_exe: Generate executable
         keep_c: Keep intermediate C file
         optimization: GCC optimization level
@@ -249,12 +149,10 @@ def compile_minipar_pipeline(
         output_base = Path(source_file).stem
     
     c_file = f"{output_base}.c"
-    asm_file = f"{output_base}.s"
     exe_file = f"{output_base}.exe" if platform.system() == "Windows" else output_base
     
     print(f"\n{'='*60}")
     print(f"Compiling: {source_file}")
-    print(f"Target: {target_arch}")
     print(f"{'='*60}\n")
     
     try:
@@ -305,28 +203,17 @@ def compile_minipar_pipeline(
         
         # Phase 6: Backend Compilation
         print("=== Phase 6: Backend Compilation ===")
-        backend = Backend(target_arch=target_arch)
+        backend = Backend()
         
         # Display backend info
         info = backend.get_info()
-        print(f"GCC: {info.get('gcc_version', 'Unknown')}")
-        print(f"Architecture: {target_arch}\n")
+        print(f"GCC: {info.get('gcc_version', 'Unknown')}\n")
         
         success = True
         
-        # Generate assembly if requested
-        if generate_asm:
-            print("Compiling to assembly...")
-            asm_success, asm_msg = backend.compile_to_assembly(
-                c_file, asm_file, optimization
-            )
-            print(asm_msg)
-            if not asm_success:
-                success = False
-        
         # Generate executable if requested
-        if generate_exe and success:
-            print("\nCompiling to executable...")
+        if generate_exe:
+            print("Compiling to executable...")
             exe_success, exe_msg = backend.compile_to_executable(
                 c_file, exe_file, optimization
             )
@@ -349,8 +236,6 @@ def compile_minipar_pipeline(
             print(f"\nGenerated files:")
             if keep_c:
                 print(f"  • {c_file} (C source)")
-            if generate_asm and os.path.exists(asm_file):
-                print(f"  • {asm_file} (Assembly)")
             if generate_exe and os.path.exists(exe_file):
                 print(f"  • {exe_file} (Executable)")
         else:
@@ -377,26 +262,10 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(
-        description="Minipar Backend Compiler - Compile to Assembly/Executable"
+        description="Minipar Backend Compiler - Compile to Executable"
     )
     parser.add_argument("input", help="Input .minipar source file")
     parser.add_argument("-o", "--output", help="Output base name (without extension)")
-    parser.add_argument(
-        "--arch", 
-        choices=["native", "armv7", "x86_64"],
-        default="native",
-        help="Target architecture"
-    )
-    parser.add_argument(
-        "--asm-only",
-        action="store_true",
-        help="Generate assembly only (no executable)"
-    )
-    parser.add_argument(
-        "--exe-only",
-        action="store_true",
-        help="Generate executable only (no assembly)"
-    )
     parser.add_argument(
         "--no-keep-c",
         action="store_true",
@@ -412,17 +281,11 @@ def main():
     
     args = parser.parse_args()
     
-    # Determine what to generate
-    gen_asm = not args.exe_only
-    gen_exe = not args.asm_only
-    
     # Run compilation
     success = compile_minipar_pipeline(
         source_file=args.input,
         output_base=args.output,
-        target_arch=args.arch,
-        generate_asm=gen_asm,
-        generate_exe=gen_exe,
+        generate_exe=True,
         keep_c=not args.no_keep_c,
         optimization=args.optimize
     )
