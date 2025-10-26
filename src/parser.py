@@ -378,25 +378,25 @@ class Parser:
     
     def call(self) -> ASTNode:
         expr = self.primary()
-        
+
         while True:
             # Handle method calls: obj.method()
             if self.match(TokenType.DOT):
                 self.advance()
                 method_name = self.consume(TokenType.IDENTIFIER, "Expected method name after '.'").value
-                
+
                 if self.match(TokenType.LPAREN):
                     self.advance()
                     arguments = []
-                    
+
                     if not self.match(TokenType.RPAREN):
                         arguments.append(self.expression())
                         while self.match(TokenType.COMMA):
                             self.advance()
                             arguments.append(self.expression())
-                    
+
                     self.consume(TokenType.RPAREN)
-                    
+
                     # Create MethodCall node
                     if isinstance(expr, Variable):
                         expr = MethodCall(expr.name, method_name, arguments)
@@ -404,27 +404,34 @@ class Parser:
                         self.error("Method calls require a variable object")
                 else:
                     self.error("Expected '(' after method name")
-            
+
+            # Handle array/string indexing: arr[index]
+            elif self.match(TokenType.LBRACKET):
+                self.advance()
+                index = self.expression()
+                self.consume(TokenType.RBRACKET, "Expected ']' after index")
+                expr = IndexAccess(expr, index)
+
             # Handle regular function calls: func()
             elif self.match(TokenType.LPAREN):
                 self.advance()
                 arguments = []
-                
+
                 if not self.match(TokenType.RPAREN):
                     arguments.append(self.expression())
                     while self.match(TokenType.COMMA):
                         self.advance()
                         arguments.append(self.expression())
-                
+
                 self.consume(TokenType.RPAREN)
-                
+
                 if isinstance(expr, Variable):
                     expr = FuncCall(expr.name, arguments)
                 else:
                     self.error("Invalid function call")
             else:
                 break
-        
+
         return expr
     
     def primary(self) -> ASTNode:

@@ -12,6 +12,7 @@ try:
     from src.semantic import SemanticAnalyzer
     from src.codegen import CodeGenerator
     from src.c_codegen import CCodeGenerator
+    from src.arm_codegen import ARMCodeGenerator, generate_arm_assembly
     from src.backend import Backend
 except ImportError:
     from lexer import Lexer
@@ -19,6 +20,7 @@ except ImportError:
     from semantic import SemanticAnalyzer
     from codegen import CodeGenerator
     from c_codegen import CCodeGenerator
+    from arm_codegen import ARMCodeGenerator, generate_arm_assembly
     from backend import Backend
 
 # Fix encoding for Windows console
@@ -32,12 +34,12 @@ if sys.platform == 'win32':
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 
-def compile_source(source: str, show_tokens: bool = False, show_ast: bool = False, 
+def compile_source(source: str, show_tokens: bool = False, show_ast: bool = False,
                    show_semantic: bool = False, generate_c: bool = False, c_output: str = None,
-                   compile_exe: bool = False):
+                   compile_exe: bool = False, generate_asm: bool = False):
     """
-    Compile Minipar source code to three-address code and optionally C code or executable
-    
+    Compile Minipar source code to three-address code and optionally C code, ARM assembly, or executable
+
     Args:
         source: Source code string
         show_tokens: If True, print tokens
@@ -46,9 +48,10 @@ def compile_source(source: str, show_tokens: bool = False, show_ast: bool = Fals
         generate_c: If True, generate C code
         c_output: Output filename for C code (default: output.c)
         compile_exe: If True, compile to executable
-    
+        generate_asm: If True, generate ARM assembly (default: True)
+
     Returns:
-        Tuple of (CodeGenerator, CCodeGenerator if generated)
+        Tuple of (CodeGenerator, CCodeGenerator if generated, ARMCodeGenerator if generated)
     """
     try:
         # Lexical Analysis
@@ -94,11 +97,32 @@ def compile_source(source: str, show_tokens: bool = False, show_ast: bool = Fals
         print("=== Code Generation (TAC) ===")
         codegen = CodeGenerator()
         codegen.generate(ast)
-        
+
         print(f"✓ Code generation complete: {len(codegen.code)} instructions generated\n")
-        
+
         codegen.print_code()
-        
+
+        # ARM Assembly Generation (if requested)
+        arm_gen = None
+        if generate_asm:
+            print("\n" + "=" * 60)
+            print("=== ARM Assembly Generation ===")
+            arm_gen = ARMCodeGenerator()
+            asm_code = arm_gen.generate(codegen.code)
+            
+            print(f"✓ ARM assembly generation complete\n")
+            
+            # Save ARM assembly
+            arm_gen_saved = generate_arm_assembly(codegen.code, "output.s")
+            
+            # Print first 50 lines of assembly
+            lines = asm_code.split('\n')
+            print("Assembly preview (first 50 lines):")
+            for i, line in enumerate(lines[:50]):
+                print(f"  {line}")
+            if len(lines) > 50:
+                print(f"  ... ({len(lines) - 50} more lines)")
+
         # C Code Generation (if requested or needed for backend)
         c_gen = None
         
@@ -145,9 +169,9 @@ def compile_source(source: str, show_tokens: bool = False, show_ast: bool = Fals
                 sys.exit(1)
             
             print("=" * 60)
-        
-        return codegen, c_gen
-        
+
+        return codegen, c_gen, arm_gen
+
     except SyntaxError as e:
         print(f"\n❌ Compilation Error: {e}")
         sys.exit(1)
@@ -158,18 +182,18 @@ def compile_source(source: str, show_tokens: bool = False, show_ast: bool = Fals
         sys.exit(1)
 
 
-def compile_file(filename: str, show_tokens: bool = False, show_ast: bool = False, 
+def compile_file(filename: str, show_tokens: bool = False, show_ast: bool = False,
                  show_semantic: bool = False, generate_c: bool = False, c_output: str = None,
-                 compile_exe: bool = False):
+                 compile_exe: bool = False, generate_asm: bool = False):
     """Compile a Minipar source file"""
     try:
         with open(filename, 'r', encoding='utf-8') as f:
             source = f.read()
-        
+
         print(f"Compiling: {filename}")
         print("=" * 60)
         return compile_source(source, show_tokens, show_ast, show_semantic, generate_c, c_output,
-                            compile_exe)
+                            compile_exe, generate_asm)
         
     except FileNotFoundError:
         print(f"❌ Error: File '{filename}' not found")
@@ -188,8 +212,10 @@ def main():
         print("  --generate-c: Generate C code")
         print("  --output <file>: Specify C output file (default: output.c)")
         print("  --exe: Compile to executable")
+        print("  --asm: Generate ARM assembly (default: False)")
+        print("  --no-asm: Skip ARM assembly generation")
         sys.exit(1)
-    
+
     # Find the filename (first non-flag argument)
     filename = None
     for arg in sys.argv[1:]:
@@ -200,25 +226,26 @@ def main():
                 continue
             filename = arg
             break
-    
+
     if not filename:
         print("Error: No source file specified")
         sys.exit(1)
-    
+
     show_tokens = '--tokens' in sys.argv
     show_ast = '--ast' in sys.argv
     show_semantic = '--semantic' in sys.argv
     generate_c = '--generate-c' in sys.argv
     compile_exe = '--exe' in sys.argv
-    
+    generate_asm = '--no-asm' not in sys.argv  # Default True unless --no-asm
+
     c_output = None
     if '--output' in sys.argv:
         idx = sys.argv.index('--output')
         if idx + 1 < len(sys.argv):
             c_output = sys.argv[idx + 1]
-    
+
     compile_file(filename, show_tokens, show_ast, show_semantic, generate_c, c_output,
-                compile_exe)
+                compile_exe, generate_asm)
 
 
 if __name__ == '__main__':

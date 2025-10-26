@@ -152,7 +152,19 @@ class MiniparRunner:
     
     def exec_VarDecl(self, node: VarDecl) -> Any:
         """Execute variable declaration"""
-        value = self.execute(node.initializer) if node.initializer else None
+        if node.initializer:
+            value = self.execute(node.initializer)
+        else:
+            # Initialize with default values based on type
+            if node.type == "number":
+                value = 0
+            elif node.type == "string":
+                value = ""
+            elif node.type == "bool":
+                value = False
+            else:
+                value = None
+        
         self.current_scope.define(node.name, value)
         return value
     
@@ -256,9 +268,9 @@ class MiniparRunner:
         """Execute binary operation"""
         left = self.execute(node.left)
         right = self.execute(node.right)
-        
+
         op = node.operator
-        
+
         # Arithmetic
         if op == '+':
             return left + right
@@ -267,10 +279,16 @@ class MiniparRunner:
         elif op == '*':
             return left * right
         elif op == '/':
+            # Check for division by zero
+            if right == 0:
+                raise ZeroDivisionError(f"Division by zero in expression")
             return left / right
         elif op == '%':
+            # Check for modulo by zero
+            if right == 0:
+                raise ZeroDivisionError(f"Modulo by zero in expression")
             return left % right
-        
+
         # Comparison
         elif op == '==':
             return left == right
@@ -284,13 +302,13 @@ class MiniparRunner:
             return left <= right
         elif op == '>=':
             return left >= right
-        
+
         # Logical
         elif op == '&&':
             return left and right
         elif op == '||':
             return left or right
-        
+
         else:
             raise ValueError(f"Unknown operator: {op}")
     
@@ -320,7 +338,32 @@ class MiniparRunner:
     def exec_BoolLiteral(self, node: BoolLiteral) -> Any:
         """Return boolean literal value"""
         return node.value
-    
+
+    def exec_IndexAccess(self, node: 'IndexAccess') -> Any:
+        """Execute index access (array/string indexing)"""
+        obj = self.execute(node.object)
+        index = self.execute(node.index)
+        
+        # Convert index to integer
+        try:
+            index = int(index)
+        except (ValueError, TypeError):
+            raise TypeError(f"Index must be a number, got {type(index).__name__}")
+        
+        # Handle string indexing
+        if isinstance(obj, str):
+            if index < 0 or index >= len(obj):
+                raise IndexError(f"String index out of range: {index}")
+            return obj[index]
+        
+        # Handle list indexing (if lists are supported)
+        if isinstance(obj, list):
+            if index < 0 or index >= len(obj):
+                raise IndexError(f"List index out of range: {index}")
+            return obj[index]
+        
+        raise TypeError(f"Cannot index object of type {type(obj).__name__}")
+
     def exec_ParBlock(self, node: ParBlock) -> Any:
         """Execute parallel block using threads"""
         # For now, execute statements sequentially
@@ -542,7 +585,8 @@ class MiniparRunner:
                 pass
         
         self.channels.clear()
-        print("\n✓ Runtime cleanup complete")
+        print("\n[OK] Runtime cleanup complete")
+
 
 
 def main():

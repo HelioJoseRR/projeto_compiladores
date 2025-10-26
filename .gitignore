@@ -10,9 +10,12 @@ ENV/
 
 # Generated files
 generated/
+output.*
 *.exe
 *.o
 *.out
+*.s
+*.asm
 
 # IDE
 .vscode/
@@ -24,5 +27,10 @@ generated/
 .DS_Store
 Thumbs.db
 
-# UV
+# UV/Package management
 uv.lock
+
+# Test outputs
+test_*.minipar
+debug_*.py
+*_test.exe

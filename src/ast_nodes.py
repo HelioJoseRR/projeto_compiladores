@@ -141,3 +141,10 @@ class MethodCall(ASTNode):
     object: str  # Object name
     method: str  # Method name
     arguments: List[ASTNode]  # Method arguments
+
+
+@dataclass
+class IndexAccess(ASTNode):
+    """Array/string index access - arr[index]"""
+    object: ASTNode  # Object being indexed
+    index: ASTNode  # Index expression

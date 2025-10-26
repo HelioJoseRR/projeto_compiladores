@@ -22,6 +22,9 @@ class TAC:
         if self.op == 'CALL':
             # CALL nome_funcao n_args resultado
             return f"{self.op} {self.arg1} {self.arg2} {self.result}"
+        elif self.op == 'INDEX':
+            # INDEX object index result
+            return f"{self.result} = {self.arg1}[{self.arg2}]"
         elif self.op == 'CHANNEL_CREATE':
             # CHANNEL_CREATE channel_type name args
             return f"{self.op} {self.arg1} {self.arg2} {{{self.result}}}"
@@ -241,13 +244,21 @@ class CodeGenerator:
         for arg in node.arguments:
             arg_result = self.generate(arg)
             self.emit('PARAM', arg_result)
-        
+
         # Generate method call instruction
         result = self.new_temp()
         self.emit('METHOD_CALL', node.object, node.method, result)
         self.emit('METHOD_ARGS', len(node.arguments))
         return result
-    
+
+    def gen_IndexAccess(self, node: 'IndexAccess') -> str:
+        """Generate code for index access - arr[index]"""
+        obj = self.generate(node.object)
+        index = self.generate(node.index)
+        result = self.new_temp()
+        self.emit('INDEX', obj, index, result)
+        return result
+
     def print_code(self):
         """Print the generated three-address code"""
         print("\n=== Three-Address Code ===")

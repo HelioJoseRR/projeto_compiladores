@@ -33,7 +33,7 @@ class SemanticAnalyzer:
         """Initialize built-in functions in global scope"""
         builtins = [
             ("print", "void", ["any"]),  # Variable args, simplified
-            ("input", "string", ["string"]),
+            ("input", "any", ["string"]),  # Returns any type (polymorphic) based on usage context
             ("len", "number", ["any"]),
             ("to_string", "string", ["any"]),
             ("to_number", "number", ["string"]),
@@ -145,10 +145,15 @@ class SemanticAnalyzer:
         # Set current function return type for checking return statements
         old_return_type = self.current_function_return_type
         self.current_function_return_type = node.return_type
-        
+
         # Visit function body
         self.visit(node.body)
-        
+
+        # Check if non-void function has return statement (simple heuristic)
+        if node.return_type != "void" and not self._has_return_statement(node.body):
+            # This is a warning rather than an error since we can't do complete flow analysis
+            pass  # Could add warning: self.add_error(f"Function '{node.name}' may not return...")
+
         # Restore previous return type
         self.current_function_return_type = old_return_type
         
@@ -369,8 +374,8 @@ class SemanticAnalyzer:
             self.add_error(f"'{node.name}' is not a function")
             return "any"
         
-        # Check argument count (relaxed for built-ins like print)
-        if symbol.param_types and node.name not in ['print']:
+        # Check argument count (relaxed for built-ins like print and input)
+        if symbol.param_types and node.name not in ['print', 'input']:
             if len(node.arguments) != len(symbol.param_types):
                 self.add_error(
                     f"Function '{node.name}' expects {len(symbol.param_types)} arguments, "
@@ -440,7 +445,23 @@ class SemanticAnalyzer:
     def visit_BoolLiteral(self, node: BoolLiteral) -> str:
         """Visit boolean literal"""
         return "bool"
-    
+
+    def visit_IndexAccess(self, node: 'IndexAccess') -> str:
+        """Visit index access (array/string indexing)"""
+        obj_type = self.visit(node.object)
+        index_type = self.visit(node.index)
+        
+        # Check index is number
+        if index_type != "number" and index_type != "any":
+            self.add_error(f"Index must be number, got {index_type}")
+        
+        # For strings, indexing returns string (single character)
+        if obj_type == "string":
+            return "string"
+        
+        # For other types, return any (generic)
+        return "any"
+
     # ========== Helper Methods ==========
     
     def is_type_compatible(self, expected: str, actual: str) -> bool:
@@ -453,7 +474,26 @@ class SemanticAnalyzer:
         if expected == "number" and actual == "bool":
             return True
         return False
-    
+
+    def _has_return_statement(self, node: ASTNode) -> bool:
+        """Check if a block has a return statement (simple heuristic check)"""
+        if isinstance(node, ReturnStmt):
+            return True
+        
+        if isinstance(node, Block):
+            # Check if any statement is a return
+            for stmt in node.statements:
+                if isinstance(stmt, ReturnStmt):
+                    return True
+                # Check in if statements - both branches must have return
+                if isinstance(stmt, IfStmt):
+                    if stmt.else_branch:
+                        if (self._has_return_statement(stmt.then_branch) and 
+                            self._has_return_statement(stmt.else_branch)):
+                            return True
+        
+        return False
+
     def print_errors(self):
         """Print all semantic errors"""
         if self.errors:
