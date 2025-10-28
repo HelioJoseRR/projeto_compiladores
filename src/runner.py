@@ -88,6 +88,7 @@ class MiniparRunner:
             'to_string': str,
             'to_number': lambda x: int(x) if isinstance(x, str) else x,
             'to_bool': bool,
+            'len': len,
         }
     
     def run_file(self, filename: str):
@@ -199,9 +200,36 @@ class MiniparRunner:
                 break
             except ContinueException:
                 continue
+
+        return None
+
+    def exec_ForStmt(self, node: 'ForStmt') -> Any:
+        """Execute for loop"""
+        iterable = self.execute(node.iterable)
+        
+        # Check if iterable is valid
+        if not isinstance(iterable, (list, str)):
+            raise TypeError(f"Cannot iterate over {type(iterable).__name__}")
+        
+        # Enter new scope for loop variable
+        self.enter_scope()
+        
+        try:
+            for item in iterable:
+                # Assign loop variable
+                self.current_scope.set(node.variable.name, item)
+                
+                try:
+                    self.execute(node.body)
+                except BreakException:
+                    break
+                except ContinueException:
+                    continue
+        finally:
+            self.exit_scope()
         
         return None
-    
+
     def exec_BreakStmt(self, node: BreakStmt) -> Any:
         """Execute break statement"""
         raise BreakException()
@@ -339,30 +367,96 @@ class MiniparRunner:
         """Return boolean literal value"""
         return node.value
 
+    def exec_ListLiteral(self, node: 'ListLiteral') -> Any:
+        """Execute list literal"""
+        result = []
+        for elem in node.elements:
+            result.append(self.execute(elem))
+        return result
+
+    def exec_ListComprehension(self, node: 'ListComprehension') -> Any:
+        """Execute list comprehension"""
+        result = []
+        iterable = self.execute(node.iterable)
+        
+        # Enter new scope for loop variable
+        self.enter_scope()
+        
+        try:
+            for item in iterable:
+                # Assign loop variable
+                self.current_scope.set(node.variable.name, item)
+                # Evaluate expression and append to result
+                value = self.execute(node.expression)
+                result.append(value)
+        finally:
+            self.exit_scope()
+        
+        return result
+
+    def exec_DictLiteral(self, node: 'DictLiteral') -> Any:
+        """Execute dictionary literal"""
+        result = {}
+        for key_node, value_node in node.pairs:
+            key = self.execute(key_node)
+            value = self.execute(value_node)
+            result[key] = value
+        return result
+
     def exec_IndexAccess(self, node: 'IndexAccess') -> Any:
         """Execute index access (array/string indexing)"""
         obj = self.execute(node.object)
         index = self.execute(node.index)
-        
+
         # Convert index to integer
         try:
             index = int(index)
         except (ValueError, TypeError):
             raise TypeError(f"Index must be a number, got {type(index).__name__}")
-        
+
         # Handle string indexing
         if isinstance(obj, str):
             if index < 0 or index >= len(obj):
                 raise IndexError(f"String index out of range: {index}")
             return obj[index]
-        
+
         # Handle list indexing (if lists are supported)
         if isinstance(obj, list):
             if index < 0 or index >= len(obj):
                 raise IndexError(f"List index out of range: {index}")
             return obj[index]
-        
+
         raise TypeError(f"Cannot index object of type {type(obj).__name__}")
+
+    def exec_SliceAccess(self, node: 'SliceAccess') -> Any:
+        """Execute slice access (array/string slicing)"""
+        obj = self.execute(node.object)
+        
+        # Get start index
+        if node.start:
+            start = self.execute(node.start)
+            try:
+                start = int(start)
+            except (ValueError, TypeError):
+                raise TypeError(f"Slice start must be a number, got {type(start).__name__}")
+        else:
+            start = None
+        
+        # Get end index
+        if node.end:
+            end = self.execute(node.end)
+            try:
+                end = int(end)
+            except (ValueError, TypeError):
+                raise TypeError(f"Slice end must be a number, got {type(end).__name__}")
+        else:
+            end = None
+        
+        # Perform slicing
+        if isinstance(obj, (str, list)):
+            return obj[start:end]
+        
+        raise TypeError(f"Cannot slice object of type {type(obj).__name__}")
 
     def exec_ParBlock(self, node: ParBlock) -> Any:
         """Execute parallel block using threads"""
@@ -508,73 +602,172 @@ class MiniparRunner:
         """Create client channel (socket client)"""
         # Parse arguments: {host, port}
         args = node.arguments
-        
+
         if len(args) < 2:
             raise ValueError("Client channel requires: host, port")
-        
+
         host = self.execute(args[0])
         port = self.execute(args[1])
-        
+
         # Create socket and connect
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        
+
         try:
             client.connect((host, int(port)))
             print(f"✓ Client '{node.name}' connected to {host}:{port}")
-            
+
             # Receive welcome message
             welcome = client.recv(4096).decode('utf-8')
             print(f"  Server says: {welcome}")
-            
+
             # Store connection
             self.channels[node.name] = client
-            
+
+        except ConnectionRefusedError:
+            print(f"✗ Failed to connect client '{node.name}': Connection refused")
+            print(f"  Make sure a server is running on {host}:{port}")
+            print(f"  Hint: Start the server program in another terminal first!")
+            raise ConnectionRefusedError(f"No server running on {host}:{port}. Start the server first!")
         except Exception as e:
             print(f"✗ Failed to connect client '{node.name}': {e}")
             raise
-        
+
         return None
     
     def exec_MethodCall(self, node: MethodCall) -> Any:
-        """Execute method call (e.g., channel.send(), channel.close())"""
+        """Execute method call (e.g., channel.send(), list.append(), str.split())"""
         obj_name = node.object
         method_name = node.method
-        
+
         # Check if it's a channel method
         if obj_name in self.channels:
             conn = self.channels[obj_name]
-            
+
             if method_name == 'send':
                 # Send data to server
                 args = [self.execute(arg) for arg in node.arguments]
                 message = ','.join(str(arg) for arg in args)
-                
+
                 conn.send(message.encode('utf-8'))
                 print(f"  Sent to server: {message}")
-                
+
                 # Receive response
                 response = conn.recv(4096).decode('utf-8')
                 print(f"  Received from server: {response}")
-                
+
                 # Try to convert response to number
                 try:
                     return float(response) if '.' in response else int(response)
                 except ValueError:
                     return response
-            
+
             elif method_name == 'close':
                 # Close connection
                 conn.close()
                 del self.channels[obj_name]
                 print(f"✓ Connection '{obj_name}' closed")
                 return None
+
+            else:
+                raise ValueError(f"Unknown channel method: {method_name}")
+
+        # Get the object
+        obj = self.current_scope.get(obj_name)
+        if obj is None:
+            raise NameError(f"Object '{obj_name}' not found")
+
+        # List methods
+        if isinstance(obj, list):
+            if method_name == 'append':
+                if len(node.arguments) != 1:
+                    raise TypeError(f"append() takes exactly 1 argument")
+                value = self.execute(node.arguments[0])
+                obj.append(value)
+                return None
+            
+            elif method_name == 'pop':
+                if len(node.arguments) == 0:
+                    return obj.pop() if obj else None
+                elif len(node.arguments) == 1:
+                    index = int(self.execute(node.arguments[0]))
+                    return obj.pop(index)
+                else:
+                    raise TypeError(f"pop() takes at most 1 argument")
+            
+            elif method_name == 'insert':
+                if len(node.arguments) != 2:
+                    raise TypeError(f"insert() takes exactly 2 arguments")
+                index = int(self.execute(node.arguments[0]))
+                value = self.execute(node.arguments[1])
+                obj.insert(index, value)
+                return None
+            
+            elif method_name == 'remove':
+                if len(node.arguments) != 1:
+                    raise TypeError(f"remove() takes exactly 1 argument")
+                value = self.execute(node.arguments[0])
+                obj.remove(value)
+                return None
+            
+            elif method_name == 'sort':
+                if len(node.arguments) != 0:
+                    raise TypeError(f"sort() takes no arguments")
+                obj.sort()
+                return None
             
             else:
-                raise ValueError(f"Unknown method: {method_name}")
-        
+                raise AttributeError(f"List has no method '{method_name}'")
+
+        # String methods
+        elif isinstance(obj, str):
+            if method_name == 'strip':
+                return obj.strip()
+            elif method_name == 'lstrip':
+                return obj.lstrip()
+            elif method_name == 'rstrip':
+                return obj.rstrip()
+            elif method_name == 'lower':
+                return obj.lower()
+            elif method_name == 'upper':
+                return obj.upper()
+            elif method_name == 'split':
+                if len(node.arguments) == 0:
+                    return obj.split()
+                elif len(node.arguments) == 1:
+                    sep = self.execute(node.arguments[0])
+                    return obj.split(sep)
+                else:
+                    raise TypeError(f"split() takes at most 1 argument")
+            elif method_name == 'replace':
+                if len(node.arguments) != 2:
+                    raise TypeError(f"replace() takes exactly 2 arguments")
+                old = self.execute(node.arguments[0])
+                new = self.execute(node.arguments[1])
+                return obj.replace(old, new)
+            elif method_name == 'startswith':
+                if len(node.arguments) != 1:
+                    raise TypeError(f"startswith() takes exactly 1 argument")
+                prefix = self.execute(node.arguments[0])
+                return obj.startswith(prefix)
+            elif method_name == 'endswith':
+                if len(node.arguments) != 1:
+                    raise TypeError(f"endswith() takes exactly 1 argument")
+                suffix = self.execute(node.arguments[0])
+                return obj.endswith(suffix)
+            elif method_name == 'to_number':
+                try:
+                    if '.' in obj:
+                        return float(obj)
+                    else:
+                        return int(obj)
+                except ValueError:
+                    raise ValueError(f"Cannot convert '{obj}' to number")
+            else:
+                raise AttributeError(f"String has no method '{method_name}'")
+
         else:
-            raise NameError(f"Object '{obj_name}' not found")
-    
+            raise TypeError(f"Object of type {type(obj).__name__} has no methods")
+
     def cleanup(self):
         """Clean up resources"""
         # Close all channels

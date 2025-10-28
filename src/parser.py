@@ -190,6 +190,8 @@ class Parser:
             return self.if_statement()
         elif self.match(TokenType.WHILE):
             return self.while_statement()
+        elif self.match(TokenType.FOR):
+            return self.for_statement()
         elif self.match(TokenType.SEQ):
             return self.seq_block()
         elif self.match(TokenType.PAR):
@@ -230,9 +232,36 @@ class Parser:
         condition = self.expression()
         self.consume(TokenType.RPAREN)
         body = self.statement()
-        
+
         return WhileStmt(condition, body)
-    
+
+    def for_statement(self) -> ForStmt:
+        """Parse for loop: for (var x: type in iterable) { body }"""
+        self.consume(TokenType.FOR)
+        self.consume(TokenType.LPAREN)
+        
+        # Parse loop variable declaration: var x: type
+        self.consume(TokenType.VAR, "Expected 'var' in for loop")
+        var_name = self.consume(TokenType.IDENTIFIER, "Expected variable name").value
+        self.consume(TokenType.COLON, "Expected ':' after variable name")
+        var_type = self.type_specifier()
+        
+        # Create variable declaration
+        variable = VarDecl(var_type, var_name, None)
+        
+        # Parse 'in' keyword
+        self.consume(TokenType.IN, "Expected 'in' after variable declaration")
+        
+        # Parse iterable expression
+        iterable = self.expression()
+        
+        self.consume(TokenType.RPAREN, "Expected ')' after for header")
+        
+        # Parse loop body
+        body = self.statement()
+        
+        return ForStmt(variable, iterable, body)
+
     def return_statement(self) -> ReturnStmt:
         self.consume(TokenType.RETURN)
         value = None
@@ -405,12 +434,43 @@ class Parser:
                 else:
                     self.error("Expected '(' after method name")
 
-            # Handle array/string indexing: arr[index]
+            # Handle array/string indexing and slicing: arr[index] or arr[start:end]
             elif self.match(TokenType.LBRACKET):
                 self.advance()
-                index = self.expression()
-                self.consume(TokenType.RBRACKET, "Expected ']' after index")
-                expr = IndexAccess(expr, index)
+                
+                # Check if it's a slice (has colon)
+                if self.match(TokenType.COLON):
+                    # [:end] - slice from beginning
+                    self.advance()
+                    if self.match(TokenType.RBRACKET):
+                        # [:] - entire slice
+                        self.consume(TokenType.RBRACKET)
+                        expr = SliceAccess(expr, None, None)
+                    else:
+                        # [:end]
+                        end = self.expression()
+                        self.consume(TokenType.RBRACKET, "Expected ']' after slice")
+                        expr = SliceAccess(expr, None, end)
+                else:
+                    # Parse first expression
+                    first_expr = self.expression()
+                    
+                    if self.match(TokenType.COLON):
+                        # [start:] or [start:end]
+                        self.advance()
+                        if self.match(TokenType.RBRACKET):
+                            # [start:]
+                            self.consume(TokenType.RBRACKET)
+                            expr = SliceAccess(expr, first_expr, None)
+                        else:
+                            # [start:end]
+                            end = self.expression()
+                            self.consume(TokenType.RBRACKET, "Expected ']' after slice")
+                            expr = SliceAccess(expr, first_expr, end)
+                    else:
+                        # [index] - regular index access
+                        self.consume(TokenType.RBRACKET, "Expected ']' after index")
+                        expr = IndexAccess(expr, first_expr)
 
             # Handle regular function calls: func()
             elif self.match(TokenType.LPAREN):
@@ -438,27 +498,119 @@ class Parser:
         if self.match(TokenType.TRUE):
             self.advance()
             return BoolLiteral(True)
-        
+
         if self.match(TokenType.FALSE):
             self.advance()
             return BoolLiteral(False)
-        
+
         if self.match(TokenType.NUMBER_LITERAL):
             value = self.advance().value
             return NumberLiteral(value)
-        
+
         if self.match(TokenType.STRING_LITERAL):
             value = self.advance().value
             return StringLiteral(value)
-        
+
         if self.match(TokenType.IDENTIFIER):
             name = self.advance().value
             return Variable(name)
-        
+
         if self.match(TokenType.LPAREN):
             self.advance()
             expr = self.expression()
             self.consume(TokenType.RPAREN)
             return expr
-        
+
+        # List literal: []  or  [elem1, elem2, ...]  or  [for ... -> expr]
+        if self.match(TokenType.LBRACKET):
+            self.advance()
+            
+            # Check for list comprehension: [for (var x in list) -> expr]
+            if self.match(TokenType.FOR):
+                self.advance()
+                self.consume(TokenType.LPAREN)
+                
+                # Parse loop variable
+                self.consume(TokenType.VAR, "Expected 'var' in list comprehension")
+                var_name = self.consume(TokenType.IDENTIFIER, "Expected variable name").value
+                self.consume(TokenType.COLON, "Expected ':' after variable name")
+                var_type = self.type_specifier()
+                
+                variable = VarDecl(var_type, var_name, None)
+                
+                # Parse 'in' keyword
+                self.consume(TokenType.IN, "Expected 'in' after variable declaration")
+                
+                # Parse iterable
+                iterable = self.expression()
+                
+                self.consume(TokenType.RPAREN, "Expected ')' after iterable")
+                self.consume(TokenType.ARROW, "Expected '->' in list comprehension")
+                
+                # Parse expression
+                expr = self.expression()
+                
+                self.consume(TokenType.RBRACKET, "Expected ']' after list comprehension")
+                return ListComprehension(variable, iterable, expr)
+            
+            # Regular list literal
+            elements = []
+            
+            if not self.match(TokenType.RBRACKET):
+                elements.append(self.expression())
+                while self.match(TokenType.COMMA):
+                    self.advance()
+                    if self.match(TokenType.RBRACKET):  # Allow trailing comma
+                        break
+                    elements.append(self.expression())
+            
+            self.consume(TokenType.RBRACKET, "Expected ']' after list elements")
+            return ListLiteral(elements)
+
+        # Dictionary literal: {}  or  {key1: val1, key2: val2, ...}
+        if self.match(TokenType.LBRACE):
+            # Need to distinguish between block and dict literal
+            # Check for dictionary patterns by looking ahead
+            next_token = self.peek(1)
+            
+            # Empty dict: {}
+            if next_token.type == TokenType.RBRACE:
+                return self.dict_literal()
+            
+            # Dict with string keys: {"key": value}
+            if next_token.type == TokenType.STRING_LITERAL:
+                if self.peek(2).type == TokenType.COLON:
+                    return self.dict_literal()
+            
+            # Dict with identifier keys: {key: value}
+            if next_token.type == TokenType.IDENTIFIER:
+                if self.peek(2).type == TokenType.COLON:
+                    return self.dict_literal()
+            
+            # Otherwise fall through to error (not a valid dict in expression context)
+
         self.error(f"Unexpected token: {self.current().type.name}")
+
+    def dict_literal(self) -> DictLiteral:
+        """Parse dictionary literal: {key1: val1, key2: val2}"""
+        self.consume(TokenType.LBRACE)
+        pairs = []
+        
+        if not self.match(TokenType.RBRACE):
+            # Parse first key:value pair
+            key = self.expression()
+            self.consume(TokenType.COLON, "Expected ':' after dictionary key")
+            value = self.expression()
+            pairs.append((key, value))
+            
+            while self.match(TokenType.COMMA):
+                self.advance()
+                if self.match(TokenType.RBRACE):  # Allow trailing comma
+                    break
+                key = self.expression()
+                self.consume(TokenType.COLON, "Expected ':' after dictionary key")
+                value = self.expression()
+                pairs.append((key, value))
+        
+        self.consume(TokenType.RBRACE, "Expected '}' after dictionary elements")
+        return DictLiteral(pairs)

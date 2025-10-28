@@ -31,6 +31,4 @@ Thumbs.db
 uv.lock
 
 # Test outputs
-test_*.minipar
 debug_*.py
-*_test.exe
