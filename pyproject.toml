@@ -6,7 +6,7 @@ authors = [
     {name = "Projeto Compiladores"}
 ]
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = {text = "MIT"}
 keywords = ["compiler", "lexer", "parser", "code-generation", "minipar"]
 classifiers = [
@@ -14,7 +14,6 @@ classifiers = [
     "Intended Audience :: Education",
     "Topic :: Software Development :: Compilers",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -23,11 +22,18 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
-# No external dependencies - uses only Python standard library
+# Core compiler has no external dependencies - uses only Python standard library
+# Web interface dependencies are optional
 dependencies = []
 
 [project.optional-dependencies]
+# Development dependencies
 dev = []
+
+# Web interface dependencies
+web = [
+    "gradio>=4.0.0",
+]
 
 [project.scripts]
 minipar = "minipar:main"
@@ -42,4 +48,6 @@ build-backend = "hatchling.build"
 packages = ["src", "examples", "tests"]
 
 [tool.uv]
-dev-dependencies = []
+dev-dependencies = [
+    "gradio>=4.0.0",
+]

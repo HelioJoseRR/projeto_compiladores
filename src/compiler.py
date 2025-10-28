@@ -89,7 +89,7 @@ def compile_source(source: str, show_tokens: bool = False, show_ast: bool = Fals
         if not is_valid:
             print("❌ Semantic errors found:")
             semantic.print_errors()
-            sys.exit(1)
+            raise Exception("Semantic analysis failed")
         
         print(f"✓ Semantic analysis complete: No errors found\n")
         
@@ -166,7 +166,7 @@ def compile_source(source: str, show_tokens: bool = False, show_ast: bool = Fals
             success, msg = backend.compile_to_executable(c_filename, exe_file)
             print(msg)
             if not success:
-                sys.exit(1)
+                raise Exception(f"Backend compilation failed: {msg}")
             
             print("=" * 60)
 
@@ -174,12 +174,12 @@ def compile_source(source: str, show_tokens: bool = False, show_ast: bool = Fals
 
     except SyntaxError as e:
         print(f"\n❌ Compilation Error: {e}")
-        sys.exit(1)
+        raise  # Re-raise the exception instead of calling sys.exit
     except Exception as e:
         print(f"\n❌ Unexpected Error: {e}")
         import traceback
         traceback.print_exc()
-        sys.exit(1)
+        raise  # Re-raise the exception instead of calling sys.exit
 
 
 def compile_file(filename: str, show_tokens: bool = False, show_ast: bool = False,
@@ -197,6 +197,9 @@ def compile_file(filename: str, show_tokens: bool = False, show_ast: bool = Fals
         
     except FileNotFoundError:
         print(f"❌ Error: File '{filename}' not found")
+        sys.exit(1)  # Keep sys.exit for CLI usage since compile_file is only used in CLI
+    except (SyntaxError, Exception):
+        # For CLI usage, we want to exit with error code
         sys.exit(1)
 
 
