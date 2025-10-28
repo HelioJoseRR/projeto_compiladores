@@ -7,7 +7,7 @@
 **Execute:**
 ```bash
 py test_compiler.py              # Verificar instalação
-py compiler.py example1.mp       # Primeiro programa
+py compiler.py example1.minipar  # Primeiro programa
 ```
 
 ---
@@ -17,7 +17,7 @@ py compiler.py example1.mp       # Primeiro programa
 ### Quero Aprender a Usar o Compilador
 → Comece com [QUICKSTART.md](QUICKSTART.md)  
 → Depois leia [USAGE.md](USAGE.md)  
-→ Veja exemplos em `example*.mp`
+→ Veja exemplos em `ex*.minipar`
 
 ### Quero Entender a Implementação
 → Leia [ARCHITECTURE.md](ARCHITECTURE.md)  
@@ -34,8 +34,8 @@ py compiler.py example1.mp       # Primeiro programa
 → Veja `test_compiler.py` para exemplos de uso da API
 
 ### Quero Ver Exemplos de Código Minipar
-→ Veja os arquivos `example*.mp`  
-→ Compile com `py compiler.py example1.mp`  
+→ Veja os arquivos `ex*.minipar`  
+→ Compile com `py compiler.py ex1.mminipar`  
 → Use `--tokens` e `--ast` para debug
 
 ---
@@ -57,12 +57,12 @@ py compiler.py example1.mp       # Primeiro programa
 
 | Arquivo | Descrição | Conceitos |
 |---------|-----------|-----------|
-| `example1.mp` | Aritmética básica | Variáveis, operadores |
-| `example2.mp` | Fatorial recursivo | Funções, recursão, if-else |
-| `example3.mp` | Soma iterativa | While, loops |
-| `example4.mp` | Lógica booleana | Operadores lógicos, bool |
-| `example5.mp` | Strings | Strings, múltiplos tipos |
-| `example6.mp` | GCD e Prime | Programa completo, nested loops |
+| `ex1.minipar` | Aritmética básica | Variáveis, operadores |
+| `ex2.minipar` | Fatorial recursivo | Funções, recursão, if-else |
+| `ex3.minipar` | Soma iterativa | While, loops |
+| `ex4.minipar` | Lógica booleana | Operadores lógicos, bool |
+| `ex5.minipar` | Strings | Strings, múltiplos tipos |
+| `ex6.minipar` | GCD e Prime | Programa completo, nested loops |
 
 ### 📚 Documentação (Por Propósito)
 
@@ -92,7 +92,7 @@ COMPILADOR MINIPAR
 ├─ USAR O COMPILADOR
 │  ├─ Início Rápido → QUICKSTART.md
 │  ├─ Manual Completo → USAGE.md
-│  └─ Exemplos → example*.mp
+│  └─ Exemplos → ex*.minipar
 │
 ├─ ENTENDER O CÓDIGO
 │  ├─ Arquitetura → ARCHITECTURE.md
@@ -106,7 +106,7 @@ COMPILADOR MINIPAR
 │
 ├─ TESTAR
 │  ├─ Suite de Testes → test_compiler.py
-│  └─ Exemplos → example*.mp
+│  └─ Exemplos → ex*.minipar
 │
 └─ MODIFICAR/ESTENDER
    ├─ Guia → ARCHITECTURE.md (seção Extensibilidade)
@@ -121,7 +121,7 @@ COMPILADOR MINIPAR
 
 **Dia 1: Fundamentos**
 1. Leia QUICKSTART.md
-2. Compile example1.mp e example2.mp
+2. Compile ex1.minipar e ex2.minipar
 3. Entenda o output (TAC)
 
 **Dia 2: Análise Léxica**
@@ -140,7 +140,7 @@ COMPILADOR MINIPAR
 3. Compare AST com TAC gerado
 
 **Dia 5: Prática**
-1. Escreva seu próprio programa .mp
+1. Escreva seu próprio programa .minipar
 2. Compile e analise o TAC
 3. Modifique um exemplo
 
@@ -163,7 +163,7 @@ COMPILADOR MINIPAR
 
 **Fase 4: CodeGen (1 hora)**
 - Leia codegen.py
-- Trace a geração para example2.mp
+- Trace a geração para ex2.minipar
 - Entenda temporários e labels
 
 **Fase 5: Integração (30 min)**
@@ -247,7 +247,7 @@ COMPILADOR MINIPAR
 ## 📞 Perguntas Frequentes
 
 **Q: Por onde começar?**  
-A: QUICKSTART.md → exemplo1.mp → USAGE.md
+A: QUICKSTART.md → ex1.minipar → USAGE.md
 
 **Q: Como funciona internamente?**  
 A: ARCHITECTURE.md tem todos os detalhes
@@ -270,7 +270,7 @@ Marque conforme avança:
 ### Primeiro Uso
 - [ ] Leu QUICKSTART.md
 - [ ] Executou test_compiler.py
-- [ ] Compilou example1.mp
+- [ ] Compilou ex1.minipar
 - [ ] Entendeu o output TAC
 
 ### Uso Básico
@@ -294,10 +294,10 @@ Marque conforme avança:
 py test_compiler.py
 
 # Compilar com detalhes
-py compiler.py arquivo.mp --tokens --ast
+py compiler.py arquivo.minipar --tokens --ast
 
 # Ver apenas TAC
-py compiler.py arquivo.mp
+py compiler.py arquivo.minipar
 
 # Compilar todos exemplos
 for %f in (example*.mp) do py compiler.py %f
@@ -315,5 +315,5 @@ for %f in (example*.mp) do py compiler.py %f
 ---
 
 **Última atualização:** Outubro 2025  
-**Versão:** 1.0.0  
+**Versão:** 1.1.0  
 **Status:** ✅ Completo e Funcional
