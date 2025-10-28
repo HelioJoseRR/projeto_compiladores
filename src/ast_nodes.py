@@ -121,3 +121,30 @@ class ChannelDecl(ASTNode):
     channel_type: str  # 's_channel' or 'c_channel'
     name: str
     arguments: List[ASTNode]  # Arguments for the channel (function, desc, host, port, etc.)
+
+
+@dataclass
+class SeqBlock(ASTNode):
+    """Sequential execution block - SEQ { stmts }"""
+    statements: List[ASTNode]
+
+
+@dataclass
+class ParBlock(ASTNode):
+    """Parallel execution block - PAR { stmts }"""
+    statements: List[ASTNode]
+
+
+@dataclass
+class MethodCall(ASTNode):
+    """Method call on an object - obj.method(args)"""
+    object: str  # Object name
+    method: str  # Method name
+    arguments: List[ASTNode]  # Method arguments
+
+
+@dataclass
+class IndexAccess(ASTNode):
+    """Array/string index access - arr[index]"""
+    object: ASTNode  # Object being indexed
+    index: ASTNode  # Index expression

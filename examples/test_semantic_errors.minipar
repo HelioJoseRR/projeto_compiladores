@@ -1,0 +1,45 @@
+# Test program to validate semantic error detection
+
+# Error 1: Duplicate variable declaration (should be caught)
+var x: number = 10
+var x: string = "hello"  # Error: already declared
+
+# Error 2: Using undefined variable
+var y: number = z + 5  # Error: z is undefined
+
+# Error 3: Type mismatch in assignment
+var name: string = "John"
+name = 42  # Error: cannot assign number to string
+
+# Error 4: Wrong argument count to function
+func add(a: number, b: number) -> number {
+    return a + b
+}
+
+var result: number = add(5)  # Error: expects 2 arguments, got 1
+
+# Error 5: Type mismatch in function call
+func greet(name: string) -> void {
+    print("Hello", name)
+}
+
+greet(123)  # Error: expects string, got number
+
+# Error 6: Break outside loop
+break  # Error: break outside loop
+
+# Error 7: Type mismatch in condition
+if (42) {  # Error: condition must be boolean
+    print("This is wrong")
+}
+
+# Error 8: Return type mismatch
+func get_number() -> number {
+    return "not a number"  # Error: expected number, got string
+}
+
+# Error 9: Wrong operator types
+var str: string = "hello"
+var num: number = str * 2  # Error: cannot multiply string
+
+print("Test complete")

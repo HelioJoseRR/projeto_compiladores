@@ -13,7 +13,7 @@ Este compilador implementa o frontend completo para a linguagem Minipar, realiza
 ### Sintaxe Básica
 
 ```bash
-py compiler.py <arquivo.mp> [opções]
+py compiler.py <arquivo.minipar> [opções]
 ```
 
 ### Opções Disponíveis
@@ -26,16 +26,16 @@ py compiler.py <arquivo.mp> [opções]
 
 ```bash
 # Compilação básica
-py compiler.py example1.mp
+py compiler.py example1.minipar
 
 # Compilação com visualização de tokens
-py compiler.py example1.mp --tokens
+py compiler.py example1.minipar --tokens
 
 # Compilação com visualização da AST
-py compiler.py example2.mp --ast
+py compiler.py example2.minipar --ast
 
 # Compilação com todas as informações
-py compiler.py example3.mp --tokens --ast
+py compiler.py example3.minipar --tokens --ast
 ```
 
 ## Executando os Testes
