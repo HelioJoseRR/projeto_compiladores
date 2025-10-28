@@ -89,6 +89,37 @@ func fatorial(n: number) -> number {
 print("Factorial of 5:", fatorial(5))
 print("Factorial of 10:", fatorial(10))
 """,
+
+    "Input Example": """# Input Example
+    var a: number = 10
+print(a)
+while(a <= 15)
+{
+  print("oi")
+  a = a + 1
+  if(a == 12){break}
+  print(a)
+}
+
+print(a)
+
+if (a < 13)
+{
+  print("a é maior ou igual que 13")
+}
+
+func soma(num1: number, num2: number) -> number
+{
+  return num1 + num2
+}
+
+var res: number = soma(2, (3 + 4)*6)
+print("res =", res)
+
+/* PARTE 2 */
+var entrada: string = input("Digite algo: ")
+print(entrada)
+""" 
 }
 
 
