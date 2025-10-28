@@ -16,8 +16,10 @@ class TokenType(Enum):
     CONTINUE = auto()
     ELSE = auto()
     FALSE = auto()
+    FOR = auto()
     FUNC = auto()
     IF = auto()
+    IN = auto()
     PAR = auto()
     RETURN = auto()
     S_CHANNEL = auto()
@@ -99,8 +101,10 @@ class Lexer:
         'continue': TokenType.CONTINUE,
         'else': TokenType.ELSE,
         'false': TokenType.FALSE,
+        'for': TokenType.FOR,
         'func': TokenType.FUNC,
         'if': TokenType.IF,
+        'in': TokenType.IN,
         'par': TokenType.PAR,
         'return': TokenType.RETURN,
         's_channel': TokenType.S_CHANNEL,

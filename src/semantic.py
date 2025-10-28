@@ -227,6 +227,31 @@ class SemanticAnalyzer:
         cond_type = self.visit(node.condition)
         if cond_type != "bool" and cond_type != "any":
             self.add_error(f"While condition must be boolean, got {cond_type}")
+
+        # Track that we're in a loop
+        old_in_loop = self.in_loop
+        self.in_loop = True
+
+        # Visit body
+        self.visit(node.body)
+
+        # Restore loop state
+        self.in_loop = old_in_loop
+
+    def visit_ForStmt(self, node: 'ForStmt') -> None:
+        """Visit for statement"""
+        # Enter a new scope for loop variable
+        self.symbol_table.enter_scope("for_loop")
+        
+        # Add loop variable to scope
+        self.symbol_table.add_symbol(
+            node.variable.name, SymbolType.VARIABLE, node.variable.type, 0
+        )
+        
+        # Visit iterable
+        iter_type = self.visit(node.iterable)
+        if iter_type not in ("list", "string", "any"):
+            self.add_error(f"Cannot iterate over type '{iter_type}'")
         
         # Track that we're in a loop
         old_in_loop = self.in_loop
@@ -235,9 +260,9 @@ class SemanticAnalyzer:
         # Visit body
         self.visit(node.body)
         
-        # Restore loop state
         self.in_loop = old_in_loop
-    
+        self.symbol_table.exit_scope()
+
     def visit_ReturnStmt(self, node: ReturnStmt) -> None:
         """Visit return statement"""
         if self.current_function_return_type is None:
@@ -303,12 +328,16 @@ class SemanticAnalyzer:
         """Visit binary operation"""
         left_type = self.visit(node.left)
         right_type = self.visit(node.right)
-        
+
         # Arithmetic operators
         if node.operator in ['+', '-', '*', '/', '%']:
-            if left_type == "string" and node.operator == '+':
-                # String concatenation
+            # String concatenation
+            if left_type == "string" and right_type == "string" and node.operator == '+':
                 return "string"
+            # List concatenation
+            if left_type == "list" and right_type == "list" and node.operator == '+':
+                return "list"
+            # Numeric operations
             if left_type != "number" or right_type != "number":
                 if left_type != "any" and right_type != "any":
                     self.add_error(
@@ -316,7 +345,7 @@ class SemanticAnalyzer:
                         f"got {left_type} and {right_type}"
                     )
             return "number"
-        
+
         # Comparison operators
         elif node.operator in ['<', '>', '<=', '>=']:
             if left_type != "number" or right_type != "number":
@@ -326,7 +355,7 @@ class SemanticAnalyzer:
                         f"got {left_type} and {right_type}"
                     )
             return "bool"
-        
+
         # Equality operators
         elif node.operator in ['==', '!=']:
             # Allow comparison of any types
@@ -402,7 +431,9 @@ class SemanticAnalyzer:
         if not symbol:
             self.add_error(f"Undefined object '{node.object}'")
             return "any"
-        
+
+        obj_type = symbol.data_type
+
         # For channels, allow send, receive, close methods
         if symbol.symbol_type == SymbolType.CHANNEL:
             if node.method in ['send', 'receive', 'close']:
@@ -415,11 +446,89 @@ class SemanticAnalyzer:
             else:
                 self.add_error(f"Unknown method '{node.method}' for channel '{node.object}'")
                 return "any"
-        
+
+        # List methods
+        if obj_type == "list":
+            if node.method == "append":
+                # append(elem) -> void
+                if len(node.arguments) != 1:
+                    self.add_error(f"append() takes exactly 1 argument, got {len(node.arguments)}")
+                else:
+                    self.visit(node.arguments[0])
+                return "void"
+            elif node.method == "pop":
+                # pop() or pop(index) -> any
+                if len(node.arguments) > 1:
+                    self.add_error(f"pop() takes at most 1 argument, got {len(node.arguments)}")
+                elif len(node.arguments) == 1:
+                    self.visit(node.arguments[0])
+                return "any"
+            elif node.method == "insert":
+                # insert(index, elem) -> void
+                if len(node.arguments) != 2:
+                    self.add_error(f"insert() takes exactly 2 arguments, got {len(node.arguments)}")
+                else:
+                    self.visit(node.arguments[0])
+                    self.visit(node.arguments[1])
+                return "void"
+            elif node.method == "remove":
+                # remove(elem) -> void
+                if len(node.arguments) != 1:
+                    self.add_error(f"remove() takes exactly 1 argument, got {len(node.arguments)}")
+                else:
+                    self.visit(node.arguments[0])
+                return "void"
+            elif node.method == "sort":
+                # sort() -> void (sorts in place)
+                if len(node.arguments) != 0:
+                    self.add_error(f"sort() takes no arguments, got {len(node.arguments)}")
+                return "void"
+            else:
+                self.add_error(f"Unknown method '{node.method}' for list")
+                return "any"
+
+        # String methods
+        if obj_type == "string":
+            if node.method in ["strip", "lower", "upper", "lstrip", "rstrip"]:
+                # These methods return string
+                if len(node.arguments) != 0:
+                    self.add_error(f"{node.method}() takes no arguments")
+                return "string"
+            elif node.method == "split":
+                # split(separator) -> list
+                if len(node.arguments) > 1:
+                    self.add_error(f"split() takes at most 1 argument, got {len(node.arguments)}")
+                elif len(node.arguments) == 1:
+                    self.visit(node.arguments[0])
+                return "list"
+            elif node.method == "replace":
+                # replace(old, new) -> string
+                if len(node.arguments) != 2:
+                    self.add_error(f"replace() takes exactly 2 arguments, got {len(node.arguments)}")
+                else:
+                    self.visit(node.arguments[0])
+                    self.visit(node.arguments[1])
+                return "string"
+            elif node.method == "startswith" or node.method == "endswith":
+                # startswith(prefix) or endswith(suffix) -> bool
+                if len(node.arguments) != 1:
+                    self.add_error(f"{node.method}() takes exactly 1 argument, got {len(node.arguments)}")
+                else:
+                    self.visit(node.arguments[0])
+                return "bool"
+            elif node.method == "to_number":
+                # to_number() -> number
+                if len(node.arguments) != 0:
+                    self.add_error(f"to_number() takes no arguments")
+                return "number"
+            else:
+                self.add_error(f"Unknown method '{node.method}' for string")
+                return "any"
+
         # For other types, method calls not yet supported
-        self.add_error(f"Method calls not supported for type {symbol.data_type}")
+        self.add_error(f"Method calls not supported for type {obj_type}")
         return "any"
-    
+
     def visit_Variable(self, node: Variable) -> str:
         """Visit variable reference"""
         symbol = self.symbol_table.lookup(node.name)
@@ -446,21 +555,90 @@ class SemanticAnalyzer:
         """Visit boolean literal"""
         return "bool"
 
+    def visit_ListLiteral(self, node: 'ListLiteral') -> str:
+        """Visit list literal"""
+        # Check all elements have compatible types
+        if not node.elements:
+            return "list"
+        
+        # Visit all elements to ensure they're valid
+        for elem in node.elements:
+            self.visit(elem)
+        
+        return "list"
+
+    def visit_ListComprehension(self, node: 'ListComprehension') -> str:
+        """Visit list comprehension"""
+        # Enter a new scope for the loop variable
+        self.symbol_table.enter_scope("list_comp")
+        
+        # Add loop variable to scope
+        self.symbol_table.add_symbol(
+            node.variable.name, SymbolType.VARIABLE, node.variable.type, 0
+        )
+        
+        # Visit iterable
+        iter_type = self.visit(node.iterable)
+        if iter_type not in ("list", "string", "any"):
+            self.add_error(f"Cannot iterate over type '{iter_type}'")
+        
+        # Visit expression
+        self.visit(node.expression)
+        
+        self.symbol_table.exit_scope()
+        return "list"
+
+    def visit_DictLiteral(self, node: 'DictLiteral') -> str:
+        """Visit dictionary literal"""
+        # Visit all keys and values to ensure they're valid
+        for key, value in node.pairs:
+            self.visit(key)
+            self.visit(value)
+        
+        return "dict"
+
     def visit_IndexAccess(self, node: 'IndexAccess') -> str:
         """Visit index access (array/string indexing)"""
         obj_type = self.visit(node.object)
         index_type = self.visit(node.index)
-        
+
         # Check index is number
         if index_type != "number" and index_type != "any":
             self.add_error(f"Index must be number, got {index_type}")
-        
+
         # For strings, indexing returns string (single character)
         if obj_type == "string":
             return "string"
-        
+
         # For other types, return any (generic)
         return "any"
+
+    def visit_SliceAccess(self, node: 'SliceAccess') -> str:
+        """Visit slice access (array/string slicing)"""
+        obj_type = self.visit(node.object)
+        
+        # Check start index if present
+        if node.start:
+            start_type = self.visit(node.start)
+            if start_type != "number" and start_type != "any":
+                self.add_error(f"Slice start must be number, got {start_type}")
+        
+        # Check end index if present
+        if node.end:
+            end_type = self.visit(node.end)
+            if end_type != "number" and end_type != "any":
+                self.add_error(f"Slice end must be number, got {end_type}")
+        
+        # Slicing a string returns a string
+        if obj_type == "string":
+            return "string"
+        
+        # Slicing a list returns a list
+        if obj_type == "list":
+            return "list"
+        
+        # For other types, return the same type
+        return obj_type
 
     # ========== Helper Methods ==========
     

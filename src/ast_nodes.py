@@ -51,6 +51,14 @@ class WhileStmt(ASTNode):
 
 
 @dataclass
+class ForStmt(ASTNode):
+    """For loop - for (var x in iterable) { body }"""
+    variable: VarDecl  # Loop variable declaration
+    iterable: ASTNode  # Expression to iterate over
+    body: ASTNode  # Loop body
+
+
+@dataclass
 class ReturnStmt(ASTNode):
     value: Optional[ASTNode] = None
 
@@ -116,6 +124,26 @@ class BoolLiteral(ASTNode):
 
 
 @dataclass
+class ListLiteral(ASTNode):
+    """List literal - [elem1, elem2, ...]"""
+    elements: List[ASTNode]
+
+
+@dataclass
+class ListComprehension(ASTNode):
+    """List comprehension - [for (var x in iterable) -> expression]"""
+    variable: VarDecl  # Loop variable
+    iterable: ASTNode  # Expression to iterate over
+    expression: ASTNode  # Expression to evaluate for each element
+
+
+@dataclass
+class DictLiteral(ASTNode):
+    """Dictionary literal - {key1: val1, key2: val2, ...}"""
+    pairs: List[tuple]  # List of (key, value) tuples
+
+
+@dataclass
 class ChannelDecl(ASTNode):
     """Channel declaration (s_channel or c_channel)"""
     channel_type: str  # 's_channel' or 'c_channel'
@@ -148,3 +176,11 @@ class IndexAccess(ASTNode):
     """Array/string index access - arr[index]"""
     object: ASTNode  # Object being indexed
     index: ASTNode  # Index expression
+
+
+@dataclass
+class SliceAccess(ASTNode):
+    """Array/string slice access - arr[start:end]"""
+    object: ASTNode  # Object being sliced
+    start: Optional[ASTNode] = None  # Start index (None means beginning)
+    end: Optional[ASTNode] = None  # End index (None means end)

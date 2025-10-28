@@ -144,20 +144,65 @@ class CodeGenerator:
     def gen_WhileStmt(self, node: WhileStmt) -> None:
         start_label = self.new_label()
         end_label = self.new_label()
-        
+
         # Push loop labels onto stack for break/continue
         self.loop_stack.append((start_label, end_label))
-        
+
         self.emit('LABEL', start_label)
         condition = self.generate(node.condition)
         self.emit('IF_FALSE', condition, None, end_label)
         self.generate(node.body)
         self.emit('GOTO', start_label)
         self.emit('LABEL', end_label)
+
+        # Pop loop labels from stack
+        self.loop_stack.pop()
+
+    def gen_ForStmt(self, node: 'ForStmt') -> None:
+        """Generate code for for loop"""
+        start_label = self.new_label()
+        end_label = self.new_label()
+        
+        # Push loop labels onto stack for break/continue
+        self.loop_stack.append((start_label, end_label))
+        
+        # Generate iterable
+        iterable = self.generate(node.iterable)
+        
+        # Create iterator variables
+        iter_var = self.new_temp()
+        index_var = self.new_temp()
+        length_var = self.new_temp()
+        
+        self.emit('ITER_CREATE', iterable, None, iter_var)
+        self.emit('LIST_LEN', iterable, None, length_var)
+        self.emit('ASSIGN', 0, None, index_var)
+        
+        # Loop start
+        self.emit('LABEL', start_label)
+        
+        # Check if index < length
+        cond_temp = self.new_temp()
+        self.emit('LT', index_var, length_var, cond_temp)
+        self.emit('IF_FALSE', cond_temp, None, end_label)
+        
+        # Get current element and assign to loop variable
+        self.emit('LIST_GET', iterable, index_var, node.variable.name)
+        
+        # Generate loop body
+        self.generate(node.body)
+        
+        # Increment index
+        inc_temp = self.new_temp()
+        self.emit('ADD', index_var, 1, inc_temp)
+        self.emit('ASSIGN', inc_temp, None, index_var)
+        
+        self.emit('GOTO', start_label)
+        self.emit('LABEL', end_label)
         
         # Pop loop labels from stack
         self.loop_stack.pop()
-    
+
     def gen_ReturnStmt(self, node: ReturnStmt) -> None:
         if node.value:
             result = self.generate(node.value)
@@ -220,7 +265,62 @@ class CodeGenerator:
     
     def gen_BoolLiteral(self, node: BoolLiteral) -> str:
         return str(node.value).lower()
-    
+
+    def gen_ListLiteral(self, node: 'ListLiteral') -> str:
+        """Generate code for list literal"""
+        # Generate code for each element
+        result = self.new_temp()
+        self.emit('LIST_CREATE', result)
+        
+        for elem in node.elements:
+            elem_result = self.generate(elem)
+            self.emit('LIST_APPEND', result, elem_result)
+        
+        return result
+
+    def gen_ListComprehension(self, node: 'ListComprehension') -> str:
+        """Generate code for list comprehension"""
+        result = self.new_temp()
+        self.emit('LIST_CREATE', None, None, result)
+        
+        # Generate iterable
+        iterable = self.generate(node.iterable)
+        
+        # Create loop
+        loop_start = self.new_label()
+        loop_end = self.new_label()
+        iter_var = self.new_temp()
+        
+        self.emit('ITER_CREATE', iterable, None, iter_var)
+        self.emit('LABEL', loop_start)
+        cond_temp = self.new_temp()
+        self.emit('ITER_HASNEXT', iter_var, None, cond_temp)
+        self.emit('IF_FALSE', cond_temp, None, loop_end)
+        
+        # Get next value and assign to loop variable
+        self.emit('ITER_NEXT', iter_var, None, node.variable.name)
+        
+        # Generate expression and append to result list
+        expr_result = self.generate(node.expression)
+        self.emit('LIST_APPEND', result, expr_result)
+        
+        self.emit('GOTO', loop_start)
+        self.emit('LABEL', loop_end)
+        
+        return result
+
+    def gen_DictLiteral(self, node: 'DictLiteral') -> str:
+        """Generate code for dictionary literal"""
+        result = self.new_temp()
+        self.emit('DICT_CREATE', result)
+        
+        for key, value in node.pairs:
+            key_result = self.generate(key)
+            value_result = self.generate(value)
+            self.emit('DICT_SET', result, key_result, value_result)
+        
+        return result
+
     def gen_SeqBlock(self, node: 'SeqBlock') -> None:
         """Generate code for SEQ block - sequential execution (default behavior)"""
         self.emit('SEQ_BEGIN')
@@ -257,6 +357,27 @@ class CodeGenerator:
         index = self.generate(node.index)
         result = self.new_temp()
         self.emit('INDEX', obj, index, result)
+        return result
+
+    def gen_SliceAccess(self, node: 'SliceAccess') -> str:
+        """Generate code for slice access - arr[start:end]"""
+        obj = self.generate(node.object)
+        
+        # Generate start index (or None for beginning)
+        if node.start:
+            start = self.generate(node.start)
+        else:
+            start = 'None'
+        
+        # Generate end index (or None for end)
+        if node.end:
+            end = self.generate(node.end)
+        else:
+            end = 'None'
+        
+        result = self.new_temp()
+        # Encode slice as SLICE obj start:end result
+        self.emit('SLICE', f"{obj}[{start}:{end}]", None, result)
         return result
 
     def print_code(self):
