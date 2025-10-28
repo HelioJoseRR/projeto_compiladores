@@ -5,10 +5,14 @@
 ## 🚀 Quick Start (1 minute)
 
 ```bash
-# Run a program
+# Compile and run a program (RECOMMENDED)
+py compile.py examples\ex5.minipar --exe
+.\output.exe
+
+# OR: Run directly with runtime (Advanced)
 py src\runner.py test_runner_simple.minipar
 
-# Run server/client example (2 terminals)
+# OR: Run server/client example (2 terminals)
 py src\runner.py calc_server.minipar    # Terminal 1
 py src\runner.py calc_client.minipar    # Terminal 2
 ```
@@ -34,20 +38,21 @@ py src\runner.py calc_client.minipar    # Terminal 2
 
 ## 💻 Common Commands
 
-### Execute Programs
+### Compile Programs (MAIN FEATURE)
 ```bash
-py src\runner.py <file>              # Run directly
-py src\runner.py <file> --debug      # Debug mode
+py compile.py <file>                      # To TAC (intermediate code)
+py compile.py <file> --exe                # To executable ⭐ MOST USED
+py compile.py <file> --exe --output name  # Custom output name
+py compile.py <file> --generate-c         # Generate C code
+py compile.py <file> --tokens             # Show tokens
+py compile.py <file> --ast                # Show AST
+py compile.py <file> --tokens --ast --exe # Combine flags
 ```
 
-### Compile Programs
+### Execute Programs (Runtime - Advanced)
 ```bash
-py compile.py <file>                 # To TAC
-py compile.py <file> --generate-c    # To C
-py compile.py <file> --exe           # To executable
-py compile.py <file> --tokens        # Show tokens
-py compile.py <file> --ast           # Show AST
-py compile.py --tokens --ast <file>  # Flags before or after
+py src\runner.py <file>              # Run directly (channels work)
+py src\runner.py <file> --debug      # Debug mode
 ```
 
 ### Run Tests
@@ -67,9 +72,13 @@ bin\test                             # Test
 
 | What You Need | Where to Find It |
 |---------------|------------------|
+| **Complete guide** | **[COMPLETE_GUIDE.md](COMPLETE_GUIDE.md)** ⭐ NEW |
 | Getting started | [README.md](README.md) |
-| 5-min tutorial | [docs/tutorials/QUICK_START_CHANNELS.md](docs/tutorials/QUICK_START_CHANNELS.md) |
-| Full tutorial | [docs/tutorials/CHANNEL_TUTORIAL.md](docs/tutorials/CHANNEL_TUTORIAL.md) |
+| All compiler flags | [COMPLETE_GUIDE.md](COMPLETE_GUIDE.md) |
+| Verification report | [VERIFICATION_REPORT.md](VERIFICATION_REPORT.md) |
+| 5-min channel tutorial | [docs/tutorials/QUICK_START_CHANNELS.md](docs/tutorials/QUICK_START_CHANNELS.md) |
+| Full channel tutorial | [docs/tutorials/CHANNEL_TUTORIAL.md](docs/tutorials/CHANNEL_TUTORIAL.md) |
+| General tutorial | [docs/tutorials/TUTORIAL.md](docs/tutorials/TUTORIAL.md) |
 | Complete index | [PROJECT_INDEX.md](PROJECT_INDEX.md) |
 | Technical details | [docs/technical/CHANNELS_INDEX.md](docs/technical/CHANNELS_INDEX.md) |
 | Runner docs | [src/RUNNER_README.md](src/RUNNER_README.md) |
@@ -143,10 +152,15 @@ client.close()
 ## ✅ Verify Installation
 
 ```bash
-# All should pass
+# Test compilation (ESSENTIAL)
+py compile.py examples\ex5.minipar --exe
+.\output.exe
+
+# Test all features
 py run_tests.py
+
+# Test runtime (optional)
 py src\runner.py test_runner_simple.minipar
-py compile.py examples\ex1.minipar
 ```
 
 ## 📊 Project Stats

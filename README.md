@@ -4,6 +4,7 @@ Um compilador completo para a linguagem Minipar com **runtime executor** e supor
 
 ## 🎯 Principais Recursos
 
+✅ **Web Interface** - Interface gráfica com Gradio ⭐ **NOVO**  
 ✅ **Compilador Frontend** - Lexer, Parser, Análise Semântica, Geração de Código  
 ✅ **Runtime Executor** - Execute programas Minipar diretamente  
 ✅ **Canais de Comunicação** - Cliente-servidor com sockets  
@@ -14,6 +15,17 @@ Um compilador completo para a linguagem Minipar com **runtime executor** e supor
 
 ```
 projeto_compiladores/
+├── interface/               # Web Interface ⭐ NEW
+│   ├── app.py                # Gradio frontend
+│   ├── compiler_api.py       # Backend API
+│   ├── start.bat             # Windows launcher
+│   ├── start.sh              # Linux/Mac launcher
+│   ├── test_setup.py         # Setup verification
+│   ├── requirements.txt      # Dependencies
+│   ├── README.md             # Interface guide
+│   ├── INSTALLATION.md       # Setup guide
+│   └── QUICKSTART.md         # Quick start
+│
 ├── src/                      # Código fonte do compilador
 │   ├── __init__.py          # Inicialização do pacote
 │   ├── lexer.py             # Análise Léxica
@@ -25,7 +37,7 @@ projeto_compiladores/
 │   ├── c_codegen.py         # Geração C
 │   ├── backend.py           # Backend GCC
 │   ├── compiler.py          # Driver principal
-│   ├── runner.py            # Runtime Executor ⭐ NEW
+│   ├── runner.py            # Runtime Executor
 │   └── RUNNER_README.md     # Documentação do runner
 │
 ├── examples/                 # Programas exemplo
@@ -86,7 +98,30 @@ projeto_compiladores/
 └── README.md                 # Este arquivo
 ```
 
-## 🚀 Quick Start
+## 🌐 Quick Start
+
+### 🚀 Option 1: Web Interface (Easiest!) ⭐ NEW
+
+```bash
+# Start web interface
+cd interface
+python app.py
+
+# Or use launcher
+# Windows: start.bat
+# Linux/Mac: ./start.sh
+```
+
+**Browser opens to:** http://localhost:7860
+
+**Features:**
+- ✅ Interactive code editor
+- ✅ Multiple compilation views
+- ✅ Direct program execution
+- ✅ One-click .exe download
+- ✅ Built-in examples and help
+
+### 📝 Option 2: Command Line (Traditional)
 
 ### 1. Executar Programa Diretamente (Runtime)
 ```bash
