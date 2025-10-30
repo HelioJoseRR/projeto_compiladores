@@ -4,10 +4,10 @@
 
 ```bash
 # Terminal 1 (Server)
-py src\runner.py calc_server.minipar
+py src\runner.py .\examples\calc_server.minipar
 
 # Terminal 2 (Client)
-py src\runner.py calc_client.minipar
+py src\runner.py .\examples\calc_client.minipar
 ```
 
 **Result**: Client performs 4 calculations (add, subtract, multiply, divide) and receives results from server! 🎉
@@ -33,7 +33,7 @@ cd C:\Users\gui\Documents\code\compiladores\projeto_compiladores
 
 Start the server:
 ```bash
-py src\runner.py calc_server.minipar
+py src\runner.py .\examples\calc_server.minipar
 ```
 
 **You should see:**
@@ -59,7 +59,7 @@ cd C:\Users\gui\Documents\code\compiladores\projeto_compiladores
 
 Run the client:
 ```bash
-py src\runner.py calc_client.minipar
+py src\runner.py .\examples\calc_client.minipar
 ```
 
 **You should see:**
